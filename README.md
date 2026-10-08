@@ -1,11 +1,11 @@
 # Robomath
 A python library for rotations and 3d transforms and everything else needed for robotic applications.
 
-## Installation 
+## Installation
 
 TODO
 
-## Usage 
+## Usage
 
 TODO
 
@@ -16,4 +16,3 @@ TODO
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
-
