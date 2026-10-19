@@ -11,6 +11,7 @@ authors = [
 description = "A python library for rotations and 3d transforms and everything else needed for robotic applications."
 readme = "README.md"
 requires-python = ">=3.12"
+dependencies = ["numpy"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -23,4 +24,13 @@ Homepage = "https://github.com/dcapacho3/robomath"
 Issues = "https://github.com/dcapacho3/robomath/issues"
 
 [dependency-groups]
-dev = ["pytest>=8", "pre-commit>=4.6.2"]
+dev = ["pytest>=8", "pre-commit>=4.6.2", "pytest-cov>=7.1.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
