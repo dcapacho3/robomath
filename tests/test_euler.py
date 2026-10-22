@@ -19,7 +19,7 @@ INTERIOR = np.column_stack(
     ]
 )
 # Any orientation, including ones close to gimbal lock.
-RANDOM_ROTATIONS = Rotation.random(100, random_state=1).as_matrix()
+RANDOM_ROTATIONS = Rotation.random(100, rng=1).as_matrix()
 # Loose enough for the lost precision just outside the lock branch.
 NEAR_LOCK_TOL = 1e-7
 
