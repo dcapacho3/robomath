@@ -1,4 +1,4 @@
-"""Robomath - ZYX Euler angles (Lynch & Park, Modern Robotics, appendix B.1.1)."""
+"""Robomath - ZYX Euler angles."""
 
 import numpy as np
 
