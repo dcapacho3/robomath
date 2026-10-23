@@ -36,8 +36,8 @@ def test_matches_modern_robotics(rot, axis, theta):
 
 
 @pytest.mark.parametrize("theta", ANGLES)
-@pytest.mark.parametrize("rot, axis", CASES)
-def test_inverse_matches_modern_robotics(rot, axis, theta):
+@pytest.mark.parametrize("rot", [rotx, roty, rotz])
+def test_inverse_matches_modern_robotics(rot, theta):
     """The inverse matches mr.RotInv."""
     assert_allclose(inverse(rot(theta)), mr.RotInv(rot(theta)), rtol=0, atol=TOL)
 
