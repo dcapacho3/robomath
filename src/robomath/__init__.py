@@ -3,11 +3,13 @@
 from .euler import euler_zyx_to_matrix, matrix_to_euler_zyx
 from .quaternions import (
     axis_angle_to_quat,
+    euler_zyx_to_quat,
     matrix_to_quat,
     quat_conjugate,
     quat_multiply,
     quat_normalize,
     quat_to_axis_angle,
+    quat_to_euler_zyx,
     quat_to_matrix,
     slerp,
 )
@@ -26,6 +28,7 @@ from .so3 import (
     log_vec,
     lplus,
     matrix_to_axis_angle,
+    nearest_rotation,
     rminus,
     rplus,
     vee,
@@ -62,4 +65,7 @@ __all__ = [
     "jr_inv",
     "jl",
     "jl_inv",
+    "euler_zyx_to_quat",
+    "quat_to_euler_zyx",
+    "nearest_rotation",
 ]

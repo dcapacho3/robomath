@@ -3,6 +3,7 @@
 
 import numpy as np
 
+from .euler import euler_zyx_to_matrix, matrix_to_euler_zyx
 from .so3 import matrix_to_axis_angle
 
 SLERP_TOL = 1 - 1e-12
@@ -172,3 +173,33 @@ def slerp(q0: np.ndarray, q1: np.ndarray, t: float) -> np.ndarray:
         return quat_normalize((1 - t) * q0 + t * q1)
     theta = np.arccos(dot)  # dot < SLERP_TOL, so arccos is not in its flat part
     return (np.sin((1 - t) * theta) * q0 + np.sin(t * theta) * q1) / np.sin(theta)
+
+
+def quat_to_euler_zyx(q: np.ndarray) -> tuple[float, float, float]:
+    """ZYX Euler angles (yaw, pitch, roll) of a unit quaternion (xyzw).
+
+    The quaternion has no singularity; the Euler angles do. At pitch = +-pi/2
+    yaw is set to 0, as in matrix_to_euler_zyx.
+
+    Args:
+        q (np.ndarray): Unit quaternion, shape (4,).
+
+    Returns:
+        tuple[float, float, float]: (alpha, beta, gamma) = (yaw, pitch, roll)
+            in radians, with R = Rz(alpha) Ry(beta) Rx(gamma).
+    """
+    return matrix_to_euler_zyx(quat_to_matrix(q))
+
+
+def euler_zyx_to_quat(alpha: float, beta: float, gamma: float) -> np.ndarray:
+    """Unit quaternion (xyzw, scalar >= 0) for ZYX Euler angles.
+
+    Args:
+        alpha (float): Yaw, angle about z, in radians.
+        beta (float): Pitch, angle about y, in radians.
+        gamma (float): Roll, angle about x, in radians.
+
+    Returns:
+        np.ndarray: Quaternion, shape (4,), of R = Rz(alpha) Ry(beta) Rx(gamma).
+    """
+    return matrix_to_quat(euler_zyx_to_matrix(alpha, beta, gamma))

@@ -9,12 +9,14 @@ from test_rotations import TOL
 from robomath import (
     axis_angle_to_matrix,
     axis_angle_to_quat,
+    euler_zyx_to_quat,
     matrix_to_axis_angle,
     matrix_to_quat,
     quat_conjugate,
     quat_multiply,
     quat_normalize,
     quat_to_axis_angle,
+    quat_to_euler_zyx,
     quat_to_matrix,
     rotx,
     roty,
@@ -223,3 +225,46 @@ def test_slerp_constant_angular_speed():
             quat_to_matrix(Q1).T @ quat_to_matrix(slerp(Q1, Q2, t))
         )[1]
         assert step == pytest.approx(t * total)
+
+
+# Angles away from gimbal lock (pitch inside +-1.4 rad), in scipy's ZYX order.
+INTERIOR = np.column_stack(
+    [
+        RNG.uniform(-np.pi + 0.1, np.pi - 0.1, 30),
+        RNG.uniform(-1.4, 1.4, 30),
+        RNG.uniform(-np.pi + 0.1, np.pi - 0.1, 30),
+    ]
+)
+
+
+@pytest.mark.parametrize("angles", INTERIOR)
+def test_euler_zyx_to_quat_matches_scipy(angles):
+    """The quaternion is the same rotation as scipy's intrinsic ZYX one."""
+    got = euler_zyx_to_quat(*angles)
+    expected = Rotation.from_euler("ZYX", angles)
+    assert_allclose(quat_to_matrix(got), expected.as_matrix(), rtol=0, atol=TOL)
+    assert got[3] >= 0
+
+
+@pytest.mark.parametrize("angles", INTERIOR)
+def test_quat_to_euler_zyx_matches_scipy(angles):
+    """Yaw, pitch and roll equal scipy's as_euler('ZYX') away from gimbal lock."""
+    q = Rotation.from_euler("ZYX", angles).as_quat()
+    assert_allclose(quat_to_euler_zyx(q), angles, rtol=0, atol=1e-9)
+
+
+@pytest.mark.parametrize("pitch", [np.pi / 2, -np.pi / 2])
+def test_euler_round_trip_at_gimbal_lock(pitch):
+    """At pitch +-90 degrees the angles are not unique; the rotation survives."""
+    for roll_yaw in INTERIOR[:10, [0, 2]]:
+        q = Rotation.from_euler("ZYX", [roll_yaw[0], pitch, roll_yaw[1]]).as_quat()
+        again = euler_zyx_to_quat(*quat_to_euler_zyx(q))
+        assert_allclose(quat_to_matrix(again), quat_to_matrix(q), rtol=0, atol=1e-7)
+
+
+def test_euler_round_trip_for_random_rotations():
+    """Quat -> Euler -> quat gives the same rotation for any orientation."""
+    for rot in RANDOM_ROTATIONS:
+        q = rot.as_quat()
+        again = euler_zyx_to_quat(*quat_to_euler_zyx(q))
+        assert_allclose(quat_to_matrix(again), rot.as_matrix(), rtol=0, atol=1e-7)

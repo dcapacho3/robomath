@@ -15,6 +15,7 @@ from robomath import (
     log_so3,
     log_vec,
     lplus,
+    nearest_rotation,
     rminus,
     rplus,
     vee,
@@ -130,3 +131,50 @@ def test_plus_minus_differ_between_left_and_right():
     """With a non-trivial R, the same tau gives different results on each side."""
     r, tau = MATRICES[0], SMALL[0]
     assert not np.allclose(lplus(tau, r), rplus(r, tau))
+
+
+NOISE = RNG.normal(size=(30, 3, 3))
+NOISY_CASES = list(zip(ROTATIONS.as_matrix(), NOISE, strict=True))
+
+
+@pytest.mark.parametrize("r", ROTATIONS.as_matrix())
+def test_nearest_rotation_leaves_a_rotation_unchanged(r):
+    """A true rotation is its own nearest rotation."""
+    assert_allclose(nearest_rotation(r), r, rtol=0, atol=TOL)
+
+
+@pytest.mark.parametrize(
+    "r, noise", list(zip(ROTATIONS.as_matrix(), NOISE, strict=True))
+)
+def test_nearest_rotation_repairs_a_noisy_matrix(r, noise):
+    """A noisy rotation comes back orthogonal, det +1, and no farther than r."""
+    noisy = r + 1e-3 * noise
+    fixed = nearest_rotation(noisy)
+    assert_allclose(fixed.T @ fixed, np.eye(3), rtol=0, atol=TOL)
+    assert_allclose(np.linalg.det(fixed), 1.0, rtol=0, atol=TOL)
+    # No rotation is closer to `noisy` than `fixed`, in particular not the clean one.
+    assert np.linalg.norm(noisy - fixed) <= np.linalg.norm(noisy - r)
+
+
+@pytest.mark.parametrize(
+    "r, noise", list(zip(ROTATIONS.as_matrix(), NOISE, strict=True))
+)
+def test_nearest_rotation_matches_scipy(r, noise):
+    """Scipy projects a non-orthogonal matrix onto the nearest rotation too."""
+    noisy = r + 1e-3 * noise
+    expected = Rotation.from_matrix(noisy).as_matrix()
+    assert_allclose(nearest_rotation(noisy), expected, rtol=0, atol=1e-9)
+
+
+def test_nearest_rotation_turns_a_reflection_into_a_rotation():
+    """A mirror matrix (det -1) still gives det +1: the smallest direction flips."""
+    mirror = np.diag([1.0, 1.0, -1.0])
+    fixed = nearest_rotation(mirror)
+    assert_allclose(fixed.T @ fixed, np.eye(3), rtol=0, atol=TOL)
+    assert_allclose(np.linalg.det(fixed), 1.0, rtol=0, atol=TOL)
+
+
+def test_nearest_rotation_flips_the_smallest_singular_direction():
+    """diag(3, 2, -1) has singular values 3, 2, 1: the nearest rotation is I."""
+    fixed = nearest_rotation(np.diag([3.0, 2.0, -1.0]))
+    assert_allclose(fixed, np.eye(3), rtol=0, atol=TOL)

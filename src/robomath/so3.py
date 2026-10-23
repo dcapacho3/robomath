@@ -76,6 +76,27 @@ def axis_angle_to_matrix(axis: np.ndarray, angle: float) -> np.ndarray:
     return rot
 
 
+def nearest_rotation(a: np.ndarray) -> np.ndarray:
+    """Rotation matrix closest to a 3x3 matrix (orthogonal Procrustes problem).
+
+    Use it where a matrix enters from a noisy source, or after many products,
+    when rounding has made it slightly non-orthogonal.
+
+    Args:
+        a (np.ndarray): A 3x3 matrix, close to a rotation.
+
+    Returns:
+        np.ndarray: The rotation matrix R (R.T @ R = I, det R = +1) that
+            minimizes the Frobenius norm of a - R.
+    """
+    u, _, vt = np.linalg.svd(a)
+    # U V^T is the closest orthogonal matrix, but it may be a reflection
+    # (det = -1). Flipping the direction of the smallest singular value, the
+    # last column of U, costs the least and gives a rotation.
+    d = np.linalg.det(u @ vt)
+    return u @ np.diag([1.0, 1.0, d]) @ vt
+
+
 def _axis_at_pi(r: np.ndarray, axis_times_2sin: np.ndarray) -> np.ndarray:
     """Unit axis of a rotation near pi (eq. 3.58-3.60); sign set by R - R.T."""
     s = (r + r.T) / 2
