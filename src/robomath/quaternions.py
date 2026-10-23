@@ -3,87 +3,9 @@
 
 import numpy as np
 
-SIN_TOL = 1e-5
+from .so3 import matrix_to_axis_angle
+
 SLERP_TOL = 1 - 1e-12
-
-
-def axis_angle_to_matrix(axis: np.ndarray, angle: float) -> np.ndarray:
-    """Rotation matrix for a rotation of `angle` radians about unit `axis`.
-
-    Args:
-        axis (np.ndarray): Unit vector, shape (3,).
-        angle (float): Radians.
-
-    Returns:
-        np.ndarray: The 3x3 rotation matrix.
-    """
-    wx, wy, wz = axis
-
-    # Construct the skew symmetric matrix
-    w = np.array([[0, -wz, wy], [wz, 0, -wx], [-wy, wx, 0]])
-
-    # Rodrigues' rotation formula
-    rot = np.eye(3) + np.sin(angle) * w + (1 - np.cos(angle)) * (w @ w)
-
-    return rot
-
-
-def matrix_to_axis_angle(r: np.ndarray) -> tuple[np.ndarray, float]:
-    """Unit axis and angle in [0, pi] of a rotation matrix.
-
-    The matrix logarithm of a rotation: it inverts Rodrigues'
-    formula.
-
-    R = I + sin(t) [w] + (1 - cos(t)) [w]^2 has three kinds of parts.
-    The identity and [w]^2 are symmetric, [w] is antisymmetric. So
-    - R - R.T keeps only the antisymmetric part: 2 sin(t) [w]
-    - the trace keeps only the diagonal: 1 + 2 cos(t)
-    That gives sin(t) * w and cos(t).
-    Two things break this: sin(t) = 0, which happens at t = 0 and t = pi.
-
-    Args:
-        r (np.ndarray): A 3x3 rotation matrix.
-
-    Returns:
-        tuple[np.ndarray, float]: (axis, angle).
-    """
-    r11, r12, r13 = r[0]
-    r21, r22, r23 = r[1]
-    r31, r32, r33 = r[2]
-
-    cos_angle = (r11 + r22 + r33 - 1) / 2
-
-    # The three independent entries of R - R.T are 2 sin(t) times the axis .
-    axis_times_2sin = np.array([r32 - r23, r13 - r31, r21 - r12])
-    sin_angle = np.linalg.norm(axis_times_2sin) / 2
-
-    # (a) R = I: angle 0, axis undefined.
-    if sin_angle == 0 and cos_angle > 0:
-        return np.array([1.0, 0.0, 0.0]), 0.0
-
-    # (b) angle pi: sin(t) ~ 0 and cos(t) ~ -1, so R - R.T carries no axis.
-    if cos_angle < 0 and sin_angle < SIN_TOL:
-        s = (r + r.T) / 2
-        i = np.argmax(np.diag(s))
-        if i == 2:
-            axis = np.array([s[0, 2], s[1, 2], 1 + s[2, 2]]) / np.sqrt(
-                2 * (1 + s[2, 2])
-            )
-        elif i == 1:
-            axis = np.array([s[0, 1], 1 + s[1, 1], s[2, 1]]) / np.sqrt(
-                2 * (1 + s[1, 1])
-            )
-        else:
-            axis = np.array([1 + s[0, 0], s[1, 0], s[2, 0]]) / np.sqrt(
-                2 * (1 + s[0, 0])
-            )
-        if np.dot(axis, axis_times_2sin) < 0:
-            axis = -axis
-        return axis, float(np.arctan2(sin_angle, cos_angle))
-
-    # (c) otherwise: axis from (3.53)/(3.61), angle from sin and cos.
-    angle = np.arctan2(sin_angle, cos_angle)
-    return axis_times_2sin / (2 * sin_angle), float(angle)
 
 
 def quat_normalize(q: np.ndarray) -> np.ndarray:
