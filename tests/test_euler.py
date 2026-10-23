@@ -28,15 +28,19 @@ NEAR_LOCK_TOL = 1e-7
 def test_closed_form_matches_composition(alpha, beta, gamma):
     """euler_zyx_to_matrix equals rotz(a) @ roty(b) @ rotx(g)."""
     expected = rotz(alpha) @ roty(beta) @ rotx(gamma)
-    assert_allclose(euler_zyx_to_matrix(alpha, beta, gamma), expected, atol=TOL)
+    assert_allclose(euler_zyx_to_matrix(alpha, beta, gamma), expected, rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("alpha, beta, gamma", INTERIOR)
 def test_matches_scipy(alpha, beta, gamma):
     """Both directions match scipy's intrinsic ZYX convention."""
     rot = Rotation.from_euler("ZYX", [alpha, beta, gamma])
-    assert_allclose(euler_zyx_to_matrix(alpha, beta, gamma), rot.as_matrix(), atol=TOL)
-    assert_allclose(matrix_to_euler_zyx(rot.as_matrix()), rot.as_euler("ZYX"), atol=TOL)
+    assert_allclose(
+        euler_zyx_to_matrix(alpha, beta, gamma), rot.as_matrix(), rtol=0, atol=TOL
+    )
+    assert_allclose(
+        matrix_to_euler_zyx(rot.as_matrix()), rot.as_euler("ZYX"), rtol=0, atol=TOL
+    )
 
 
 @pytest.mark.parametrize(
@@ -52,14 +56,14 @@ def test_matches_scipy(alpha, beta, gamma):
 def test_known_angles_come_back(angles):
     """Angles away from gimbal lock are recovered unchanged."""
     out = matrix_to_euler_zyx(euler_zyx_to_matrix(*angles))
-    assert_allclose(out, angles, atol=TOL)
+    assert_allclose(out, angles, rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("alpha, beta, gamma", INTERIOR)
 def test_round_trip_angles(alpha, beta, gamma):
     """Angles then matrix then angles then matrix gives the same matrix."""
     m = euler_zyx_to_matrix(alpha, beta, gamma)
-    assert_allclose(euler_zyx_to_matrix(*matrix_to_euler_zyx(m)), m, atol=TOL)
+    assert_allclose(euler_zyx_to_matrix(*matrix_to_euler_zyx(m)), m, rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("m", RANDOM_ROTATIONS)
@@ -70,7 +74,9 @@ def test_round_trip_from_matrix(m):
     The angles also stay in the documented ranges.
     """
     alpha, beta, gamma = matrix_to_euler_zyx(m)
-    assert_allclose(euler_zyx_to_matrix(alpha, beta, gamma), m, atol=NEAR_LOCK_TOL)
+    assert_allclose(
+        euler_zyx_to_matrix(alpha, beta, gamma), m, rtol=0, atol=NEAR_LOCK_TOL
+    )
     assert -np.pi <= alpha <= np.pi
     assert -np.pi / 2 <= beta <= np.pi / 2
     assert -np.pi <= gamma <= np.pi
@@ -90,7 +96,9 @@ def test_gimbal_lock(beta, alpha, gamma):
     assert out_alpha == 0.0
     assert out_beta == pytest.approx(beta)
     assert np.isfinite(out_gamma)
-    assert_allclose(euler_zyx_to_matrix(out_alpha, out_beta, out_gamma), m, atol=TOL)
+    assert_allclose(
+        euler_zyx_to_matrix(out_alpha, out_beta, out_gamma), m, rtol=0, atol=TOL
+    )
 
 
 @pytest.mark.parametrize("sign", [1, -1])
@@ -98,4 +106,6 @@ def test_gimbal_lock(beta, alpha, gamma):
 def test_just_inside_gimbal_lock(sign, offset):
     """Beta close to +-pi/2 still rebuilds R, on both sides of the lock tolerance."""
     m = euler_zyx_to_matrix(0.3, sign * (np.pi / 2 - offset), 0.9)
-    assert_allclose(euler_zyx_to_matrix(*matrix_to_euler_zyx(m)), m, atol=NEAR_LOCK_TOL)
+    assert_allclose(
+        euler_zyx_to_matrix(*matrix_to_euler_zyx(m)), m, rtol=0, atol=NEAR_LOCK_TOL
+    )

@@ -14,7 +14,7 @@ TOL = 1e-12
 @pytest.mark.parametrize("r", AXES)
 def test_zero_angle_is_identity(r):
     """A zero angle gives the identity matrix."""
-    assert_allclose(r(0.0), np.eye(3), atol=TOL)
+    assert_allclose(r(0.0), np.eye(3), rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize(
@@ -30,7 +30,7 @@ def test_quarter_turn(rot, start, end):
 
     Rotating about z moves x to y, about x moves y to z, and about y moves z to x.
     """
-    assert_allclose(rot(np.pi / 2) @ start, end, atol=TOL)
+    assert_allclose(rot(np.pi / 2) @ start, end, rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("theta", ANGLES)
@@ -38,8 +38,8 @@ def test_quarter_turn(rot, start, end):
 def test_orthogonal_with_det_one(r, theta):
     """A rotation matrix is orthogonal and has determinant +1."""
     m = r(theta)
-    assert_allclose(m @ m.T, np.eye(3), atol=TOL)
-    assert_allclose(np.linalg.det(m), 1.0)
+    assert_allclose(m @ m.T, np.eye(3), rtol=0, atol=TOL)
+    assert_allclose(np.linalg.det(m), 1.0, rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("theta", ANGLES)
@@ -47,15 +47,15 @@ def test_orthogonal_with_det_one(r, theta):
 def test_inverse(r, theta):
     """A matrix times its inverse gives the identity, and matches np.linalg.inv."""
     m = r(theta)
-    assert_allclose(m @ inverse(m), np.eye(3), atol=TOL)
-    assert_allclose(inverse(m), np.linalg.inv(m), atol=TOL)
+    assert_allclose(m @ inverse(m), np.eye(3), rtol=0, atol=TOL)
+    assert_allclose(inverse(m), np.linalg.inv(m), rtol=0, atol=TOL)
 
 
 def test_same_axis_angles_add():
     """Rotations about the same axis add their angles."""
-    assert_allclose(rotx(0.4) @ rotx(0.5), rotx(0.9), atol=TOL)
-    assert_allclose(roty(0.4) @ roty(0.5), roty(0.9), atol=TOL)
-    assert_allclose(rotz(0.4) @ rotz(0.5), rotz(0.9), atol=TOL)
+    assert_allclose(rotx(0.4) @ rotx(0.5), rotx(0.9), rtol=0, atol=TOL)
+    assert_allclose(roty(0.4) @ roty(0.5), roty(0.9), rtol=0, atol=TOL)
+    assert_allclose(rotz(0.4) @ rotz(0.5), rotz(0.9), rtol=0, atol=TOL)
 
 
 def test_order_matters():

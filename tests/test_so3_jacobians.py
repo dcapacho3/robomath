@@ -48,7 +48,7 @@ def numeric_right_jacobian(f, r, minus):
 def test_jacobians_at_zero_are_identity():
     """jr, jr_inv, jl and jl_inv of the zero vector are the identity."""
     for jacobian in (jr, jr_inv, jl, jl_inv):
-        assert_allclose(jacobian(np.zeros(3)), np.eye(3), atol=TOL)
+        assert_allclose(jacobian(np.zeros(3)), np.eye(3), rtol=0, atol=TOL)
 
 
 def test_series_and_closed_form_agree_at_the_cut_off():
@@ -56,14 +56,14 @@ def test_series_and_closed_form_agree_at_the_cut_off():
     axis = np.array([0.6, 0.0, 0.8])
     below, above = axis * SMALL_THETA * (1 - 1e-9), axis * SMALL_THETA * (1 + 1e-9)
     for jacobian in (jr, jr_inv):
-        assert_allclose(jacobian(below), jacobian(above), atol=1e-12)
+        assert_allclose(jacobian(below), jacobian(above), rtol=0, atol=1e-12)
 
 
 @pytest.mark.parametrize("theta", THETAS)
 def test_jr_is_the_derivative_of_exp(theta):
     """Exp(theta + d) ~ Exp(theta) Exp(jr(theta) @ d) for tiny d (eq. 68)."""
     assert_allclose(
-        exp_vec(theta + D), exp_vec(theta) @ exp_vec(jr(theta) @ D), atol=1e-12
+        exp_vec(theta + D), exp_vec(theta) @ exp_vec(jr(theta) @ D), rtol=0, atol=1e-12
     )
 
 
@@ -71,7 +71,10 @@ def test_jr_is_the_derivative_of_exp(theta):
 def test_jr_inv_is_the_derivative_of_log(theta):
     """Log(Exp(theta) Exp(d)) ~ theta + jr_inv(theta) @ d for tiny d (eq. 70)."""
     assert_allclose(
-        log_vec(exp_vec(theta) @ exp_vec(D)), theta + jr_inv(theta) @ D, atol=1e-12
+        log_vec(exp_vec(theta) @ exp_vec(D)),
+        theta + jr_inv(theta) @ D,
+        rtol=0,
+        atol=1e-12,
     )
 
 
@@ -79,7 +82,7 @@ def test_jr_inv_is_the_derivative_of_log(theta):
 def test_jl_is_the_left_derivative_of_exp(theta):
     """Exp(theta + d) ~ Exp(jl(theta) @ d) Exp(theta) for tiny d (eq. 72)."""
     assert_allclose(
-        exp_vec(theta + D), exp_vec(jl(theta) @ D) @ exp_vec(theta), atol=1e-12
+        exp_vec(theta + D), exp_vec(jl(theta) @ D) @ exp_vec(theta), rtol=0, atol=1e-12
     )
 
 
@@ -87,28 +90,31 @@ def test_jl_is_the_left_derivative_of_exp(theta):
 def test_jl_inv_is_the_left_derivative_of_log(theta):
     """Log(Exp(d) Exp(theta)) ~ theta + jl_inv(theta) @ d for tiny d (eq. 74)."""
     assert_allclose(
-        log_vec(exp_vec(D) @ exp_vec(theta)), theta + jl_inv(theta) @ D, atol=1e-12
+        log_vec(exp_vec(D) @ exp_vec(theta)),
+        theta + jl_inv(theta) @ D,
+        rtol=0,
+        atol=1e-12,
     )
 
 
 @pytest.mark.parametrize("theta", THETAS)
 def test_inverses(theta):
     """jr_inv @ jr == I and jl_inv @ jl == I."""
-    assert_allclose(jr_inv(theta) @ jr(theta), np.eye(3), atol=1e-12)
-    assert_allclose(jl_inv(theta) @ jl(theta), np.eye(3), atol=1e-12)
+    assert_allclose(jr_inv(theta) @ jr(theta), np.eye(3), rtol=0, atol=1e-12)
+    assert_allclose(jl_inv(theta) @ jl(theta), np.eye(3), rtol=0, atol=1e-12)
 
 
 @pytest.mark.parametrize("theta", THETAS)
 def test_jl_is_jr_transposed_and_jr_of_minus_theta(theta):
     """Jl == jr.T (eq. 147) and jl(theta) == jr(-theta) (eq. 76)."""
-    assert_allclose(jl(theta), jr(theta).T, atol=TOL)
-    assert_allclose(jl(theta), jr(-theta), atol=TOL)
+    assert_allclose(jl(theta), jr(theta).T, rtol=0, atol=TOL)
+    assert_allclose(jl(theta), jr(-theta), rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("theta", THETAS)
 def test_adjoint_from_jacobians(theta):
     """jl(theta) @ jr_inv(theta) == exp_vec(theta): Ad_R = R (eq. 75, 139)."""
-    assert_allclose(jl(theta) @ jr_inv(theta), exp_vec(theta), atol=1e-12)
+    assert_allclose(jl(theta) @ jr_inv(theta), exp_vec(theta), rtol=0, atol=1e-12)
 
 
 def test_series_matches_closed_form(monkeypatch):
@@ -132,8 +138,8 @@ def test_tiny_vectors_follow_the_low_order_expansion(t):
     w = hat(t * np.array([0.6, 0.0, 0.8]))
     atol = 1e-15 + t**3 / 10  # the first term left out is of order t^3
     theta = t * np.array([0.6, 0.0, 0.8])
-    assert_allclose(jr(theta), np.eye(3) - w / 2 + w @ w / 6, atol=atol)
-    assert_allclose(jr_inv(theta), np.eye(3) + w / 2 + w @ w / 12, atol=atol)
+    assert_allclose(jr(theta), np.eye(3) - w / 2 + w @ w / 6, rtol=0, atol=atol)
+    assert_allclose(jr_inv(theta), np.eye(3) + w / 2 + w @ w / 12, rtol=0, atol=atol)
 
 
 # The blocks below use numeric_right_jacobian to check results the paper
@@ -144,21 +150,21 @@ def test_tiny_vectors_follow_the_low_order_expansion(t):
 def test_jacobian_of_inversion(r):
     """D(R^-1)/DR == -R: f(R) = R.T, the output is a rotation (eq. 140)."""
     jacobian = numeric_right_jacobian(lambda x: x.T, r, rminus)
-    assert_allclose(jacobian, -r, atol=NUMERIC_TOL)
+    assert_allclose(jacobian, -r, rtol=0, atol=NUMERIC_TOL)
 
 
 @pytest.mark.parametrize("r", MATRICES)
 def test_jacobian_of_rotating_a_point(r):
     """D(R p)/DR == -R [p]x: f(R) = R @ p, the output is a vector (paper II-G)."""
     jacobian = numeric_right_jacobian(lambda x: x @ POINT, r, np.subtract)
-    assert_allclose(jacobian, -r @ hat(POINT), atol=NUMERIC_TOL)
+    assert_allclose(jacobian, -r @ hat(POINT), rtol=0, atol=NUMERIC_TOL)
 
 
 @pytest.mark.parametrize("r", MATRICES)
 def test_jacobian_of_plus_with_respect_to_r(r):
     """D(R (+) tau)/DR == Exp(tau)^T: composition block (eq. 148)."""
     jacobian = numeric_right_jacobian(lambda x: rplus(x, TAU), r, rminus)
-    assert_allclose(jacobian, exp_vec(TAU).T, atol=NUMERIC_TOL)
+    assert_allclose(jacobian, exp_vec(TAU).T, rtol=0, atol=NUMERIC_TOL)
 
 
 @pytest.mark.parametrize("theta", THETAS)
@@ -166,4 +172,4 @@ def test_jacobian_of_plus_with_respect_to_tau(theta):
     """D(R (+) tau)/Dtau == jr(tau): the other block (eq. 148)."""
     r = MATRICES[0]  # the result does not depend on R
     columns = [rminus(rplus(r, theta + H * e), rplus(r, theta)) / H for e in np.eye(3)]
-    assert_allclose(np.column_stack(columns), jr(theta), atol=NUMERIC_TOL)
+    assert_allclose(np.column_stack(columns), jr(theta), rtol=0, atol=NUMERIC_TOL)

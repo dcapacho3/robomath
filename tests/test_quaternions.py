@@ -35,7 +35,7 @@ Q1, Q2 = RANDOM_ROTATIONS[0].as_quat(), RANDOM_ROTATIONS[1].as_quat()
 def test_axis_angle_axes_are_rotxyz(angle):
     """A coordinate axis reproduces rotx, roty, rotz."""
     for axis, rot in zip(np.eye(3), (rotx, roty, rotz), strict=True):
-        assert_allclose(axis_angle_to_matrix(axis, angle), rot(angle), atol=TOL)
+        assert_allclose(axis_angle_to_matrix(axis, angle), rot(angle), rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("axis", AXES)
@@ -43,16 +43,16 @@ def test_axis_angle_matches_scipy(axis):
     """Both directions against scipy's rotation vector."""
     rotvec = axis * 1.1
     expected = Rotation.from_rotvec(rotvec).as_matrix()
-    assert_allclose(axis_angle_to_matrix(axis, 1.1), expected, atol=TOL)
+    assert_allclose(axis_angle_to_matrix(axis, 1.1), expected, rtol=0, atol=TOL)
     got_axis, got_angle = matrix_to_axis_angle(expected)
-    assert_allclose(got_axis * got_angle, rotvec, atol=TOL)
+    assert_allclose(got_axis * got_angle, rotvec, rtol=0, atol=TOL)
 
 
 def test_axis_angle_round_trip():
     """Matrix -> axis-angle -> matrix. Compare matrices: the axis flips at pi."""
     for m in RANDOM_ROTATIONS.as_matrix():
         axis, angle = matrix_to_axis_angle(m)
-        assert_allclose(axis_angle_to_matrix(axis, angle), m, atol=TOL)
+        assert_allclose(axis_angle_to_matrix(axis, angle), m, rtol=0, atol=TOL)
 
 
 @pytest.mark.parametrize("angle", [1e-12, 1e-9, 1e-7, 1e-5, 1e-3])
@@ -61,7 +61,7 @@ def test_small_angles(angle):
     axis = AXES[0]
     got_axis, got_angle = matrix_to_axis_angle(axis_angle_to_matrix(axis, angle))
     assert got_angle == pytest.approx(angle, rel=1e-6)
-    assert_allclose(got_axis, axis, atol=1e-3)
+    assert_allclose(got_axis, axis, rtol=0, atol=1e-3)
 
 
 @pytest.mark.parametrize("gap", [1e-3, 1e-5, 1e-7, 1e-8, 1e-9, 1e-12, 0.0])
@@ -70,7 +70,7 @@ def test_near_pi(gap):
     for axis in AXES[:10]:
         m = axis_angle_to_matrix(axis, np.pi - gap)
         got_axis, got_angle = matrix_to_axis_angle(m)
-        assert_allclose(axis_angle_to_matrix(got_axis, got_angle), m, atol=1e-7)
+        assert_allclose(axis_angle_to_matrix(got_axis, got_angle), m, rtol=0, atol=1e-7)
 
 
 def test_angle_zero_and_pi():
@@ -87,6 +87,7 @@ def test_quat_multiply_matches_matrix_product():
     assert_allclose(
         quat_to_matrix(quat_multiply(Q1, Q2)),
         quat_to_matrix(Q1) @ quat_to_matrix(Q2),
+        rtol=0,
         atol=TOL,
     )
 
@@ -94,7 +95,7 @@ def test_quat_multiply_matches_matrix_product():
 def test_quarter_turns_make_half_turn():
     """Two 90-degree turns about z give (0, 0, 1, 0)."""
     q = axis_angle_to_quat(np.array([0.0, 0.0, 1.0]), np.pi / 2)
-    assert_allclose(quat_multiply(q, q), [0, 0, 1, 0], atol=TOL)
+    assert_allclose(quat_multiply(q, q), [0, 0, 1, 0], rtol=0, atol=TOL)
 
 
 def test_quat_not_commutative():
@@ -106,18 +107,22 @@ def test_quat_not_commutative():
 
 def test_quat_conjugate_is_inverse():
     """Q * conj(q) is the identity quaternion."""
-    assert_allclose(quat_multiply(Q1, quat_conjugate(Q1)), [0, 0, 0, 1], atol=TOL)
+    assert_allclose(
+        quat_multiply(Q1, quat_conjugate(Q1)), [0, 0, 0, 1], rtol=0, atol=TOL
+    )
 
 
 def test_double_cover():
     """Q and -q give the same matrix."""
-    assert_allclose(quat_to_matrix(Q1), quat_to_matrix(-Q1), atol=TOL)
+    assert_allclose(quat_to_matrix(Q1), quat_to_matrix(-Q1), rtol=0, atol=TOL)
 
 
 def test_quat_to_matrix_matches_scipy():
     """Against Rotation.as_matrix on 100 random rotations."""
     for rot in RANDOM_ROTATIONS:
-        assert_allclose(quat_to_matrix(rot.as_quat()), rot.as_matrix(), atol=TOL)
+        assert_allclose(
+            quat_to_matrix(rot.as_quat()), rot.as_matrix(), rtol=0, atol=TOL
+        )
 
 
 def test_quat_round_trip():
@@ -125,18 +130,55 @@ def test_quat_round_trip():
     for rot in RANDOM_ROTATIONS:
         q = rot.as_quat()
         q = q if q[3] >= 0 else -q
-        assert_allclose(matrix_to_quat(quat_to_matrix(q)), q, atol=1e-7)
+        assert_allclose(matrix_to_quat(quat_to_matrix(q)), q, rtol=0, atol=1e-7)
 
 
 def test_quat_axis_angle_match_scipy():
     """axis_angle_to_quat and quat_to_axis_angle against scipy's rotvec."""
     for axis in AXES:
         q = axis_angle_to_quat(axis, 0.9)
-        assert_allclose(q, Rotation.from_rotvec(axis * 0.9).as_quat(), atol=TOL)
+        assert_allclose(q, Rotation.from_rotvec(axis * 0.9).as_quat(), rtol=0, atol=TOL)
         got_axis, got_angle = quat_to_axis_angle(-q)  # negative scalar is flipped
-        assert_allclose(got_axis, axis, atol=TOL)
+        assert_allclose(got_axis, axis, rtol=0, atol=TOL)
         assert got_angle == pytest.approx(0.9)
     assert quat_to_axis_angle(np.array([0, 0, 0, 1.0]))[1] == 0.0
+
+
+def test_quat_to_axis_angle_positive_scalar():
+    """The usual input, a positive scalar, gives back the axis and angle."""
+    for axis in AXES:
+        got_axis, got_angle = quat_to_axis_angle(axis_angle_to_quat(axis, 0.9))
+        assert_allclose(got_axis, axis, rtol=0, atol=TOL)
+        assert got_angle == pytest.approx(0.9)
+
+
+def test_quat_to_axis_angle_half_turn():
+    """A turn of pi has scalar 0; the angle is pi and the axis sign is free."""
+    for axis in [*np.eye(3), AXES[0]]:
+        got_axis, got_angle = quat_to_axis_angle(np.append(axis, 0.0))
+        assert got_angle == pytest.approx(np.pi)
+        assert abs(np.dot(got_axis, axis)) == pytest.approx(1.0)
+
+
+def test_identity_has_x_axis_and_zero_angle():
+    """With no rotation the axis is undefined; both functions return x."""
+    for axis, angle in (
+        matrix_to_axis_angle(np.eye(3)),
+        quat_to_axis_angle(np.array([0.0, 0.0, 0.0, 1.0])),
+    ):
+        assert_allclose(axis, [1.0, 0.0, 0.0], rtol=0, atol=0)
+        assert angle == 0.0
+
+
+def test_slerp_lerp_branch_between_different_quaternions():
+    """Quaternions 1e-7 rad apart use the lerp branch; t = 0.3 is 30% of the way."""
+    axis, step, t = AXES[0], 1e-7, 0.3
+    start = Rotation.from_quat(Q1)
+    q_end = (Rotation.from_rotvec(axis * step) * start).as_quat()
+    expected = Rotation.from_rotvec(axis * step * t) * start
+    assert abs(np.dot(Q1, q_end)) > 1 - 1e-12  # really in the lerp branch
+    got = quat_to_matrix(slerp(Q1, q_end, t))
+    assert_allclose(got, expected.as_matrix(), rtol=0, atol=TOL)
 
 
 def test_normalize():
@@ -151,7 +193,7 @@ def test_slerp_endpoints_and_midpoint():
     ref = Slerp([0, 1], Rotation.from_quat([Q1, Q2]))
     for t in (0.0, 0.25, 0.5, 1.0):
         assert_allclose(
-            quat_to_matrix(slerp(Q1, Q2, t)), ref([t]).as_matrix()[0], atol=TOL
+            quat_to_matrix(slerp(Q1, Q2, t)), ref([t]).as_matrix()[0], rtol=0, atol=TOL
         )
 
 
@@ -160,6 +202,7 @@ def test_slerp_shortest_path():
     assert_allclose(
         quat_to_matrix(slerp(Q1, Q2, 0.4)),
         quat_to_matrix(slerp(Q1, -Q2, 0.4)),
+        rtol=0,
         atol=TOL,
     )
 
@@ -169,7 +212,7 @@ def test_slerp_nearly_equal_quats():
     q = slerp(Q1, Q1, 0.5)
     assert np.isfinite(q).all()
     assert np.linalg.norm(q) == pytest.approx(1)
-    assert_allclose(quat_to_matrix(q), quat_to_matrix(Q1), atol=TOL)
+    assert_allclose(quat_to_matrix(q), quat_to_matrix(Q1), rtol=0, atol=TOL)
 
 
 def test_slerp_constant_angular_speed():
