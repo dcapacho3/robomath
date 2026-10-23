@@ -130,6 +130,8 @@ def test_series_matches_closed_form(monkeypatch):
     monkeypatch.setattr(so3, "SMALL_THETA", 0.0)
     closed = (*so3._jr_coefficients(t), so3._jr_inv_coefficient(t))
     assert_allclose(series, closed, rtol=2e-9)
+    # The first coefficient has no series; it must equal its plain definition.
+    assert_allclose(closed[0], (1 - np.cos(t)) / t**2, rtol=1e-9)
 
 
 @pytest.mark.parametrize("t", [1e-8, 1e-6, 1e-5, 1e-4])
@@ -173,3 +175,30 @@ def test_jacobian_of_plus_with_respect_to_tau(theta):
     r = MATRICES[0]  # the result does not depend on R
     columns = [rminus(rplus(r, theta + H * e), rplus(r, theta)) / H for e in np.eye(3)]
     assert_allclose(np.column_stack(columns), jr(theta), rtol=0, atol=NUMERIC_TOL)
+
+
+@pytest.mark.parametrize("gap", [1e-3, 1e-6, 1e-7, 0.0, -1e-7])
+def test_jr_inv_stays_accurate_near_pi(gap):
+    """jr_inv @ jr is the identity at |theta| = pi - gap, on both sides of pi."""
+    theta = np.array([0.6, 0.0, 0.8]) * (np.pi - gap)
+    assert_allclose(jr_inv(theta) @ jr(theta), np.eye(3), rtol=0, atol=1e-13)
+
+
+@pytest.mark.parametrize("jacobian", [jr, jr_inv])
+@pytest.mark.parametrize("batched", [False, True])
+def test_series_in_matrix_form_matches_closed_form(jacobian, batched, monkeypatch):
+    """Single-vector and batch paths both use the right series constants.
+
+    The cut-off is moved so the series runs at |theta| = 0.02, where a wrong
+    constant shows; the closed form (cut-off 0) is the reference.
+    """
+    theta = np.array([0.012, 0.0, 0.016])
+
+    def run():
+        return jacobian(theta[None])[0] if batched else jacobian(theta)
+
+    monkeypatch.setattr(so3, "SMALL_THETA", 1.0)
+    series = run()
+    monkeypatch.setattr(so3, "SMALL_THETA", 0.0)
+    closed = run()
+    assert_allclose(series, closed, rtol=0, atol=1e-13)

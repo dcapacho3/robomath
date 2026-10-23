@@ -72,7 +72,7 @@ def test_near_pi(gap):
     for axis in AXES[:10]:
         m = axis_angle_to_matrix(axis, np.pi - gap)
         got_axis, got_angle = matrix_to_axis_angle(m)
-        assert_allclose(axis_angle_to_matrix(got_axis, got_angle), m, rtol=0, atol=1e-7)
+        assert_allclose(axis_angle_to_matrix(got_axis, got_angle), m, rtol=0, atol=1e-9)
 
 
 def test_angle_zero_and_pi():
@@ -188,6 +188,10 @@ def test_normalize():
     assert np.linalg.norm(quat_normalize(np.array([1.0, 2, 3, 4]))) == pytest.approx(1)
     with pytest.raises(ValueError, match="zero quaternion"):
         quat_normalize(np.zeros(4))
+    with pytest.raises(ValueError, match="zero quaternion"):
+        quat_normalize(np.array([[0.0, 0, 0, 1], [0, 0, 0, 0]]))
+    batch = quat_normalize(np.array([[0.0, 0, 0, 1], [0, 0, 2, 0]]))
+    assert_allclose(batch, [[0, 0, 0, 1], [0, 0, 1, 0]], rtol=0, atol=TOL)
 
 
 def test_slerp_endpoints_and_midpoint():
