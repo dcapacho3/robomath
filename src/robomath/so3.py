@@ -9,6 +9,9 @@ import numpy as np
 from .rotations import inverse
 
 SIN_TOL = 1e-5
+# Below this |theta| the Jacobian coefficients use their Taylor series: the closed
+# forms divide by t^2 and t^3 and lose about eps/t of the result there.
+SMALL_THETA = 1e-3
 
 # Four spaces to keep apart (paper Fig. 6):
 #   R^3     rotation vector v          (what you store and pass around)
@@ -236,10 +239,73 @@ def lminus(r2: np.ndarray, r1: np.ndarray) -> np.ndarray:
     return log_vec(r2 @ inverse(r1))
 
 
-# The adjoint of SO(3) needs no function: Ad_R = R (eq. 139, from eq. 31:
-# Ad_R v = (R [v]x R^T)^vee = R v). It converts a local rotation vector into
-# the global one: lplus(R @ tau, R) == rplus(R, tau)  (eq. 32). That identity
-# is a test. The 6x6 adjoint of SE(3) (eq. 31 for SE(3), Example 6) is for L0.5.
-#
-# Not here yet: the left and right Jacobians of SO(3), Jr and Jl (eq. 143-146).
-# They are the Extras item; the EKF in L2 needs them.
+def _jr_coefficients(t: float) -> tuple[float, float]:
+    """Coefficients (a, b) of jr: (1 - cos t) / t^2 and (t - sin t) / t^3."""
+    if t < SMALL_THETA:
+        return 1 / 2 - t**2 / 24, 1 / 6 - t**2 / 120
+    return (1 - np.cos(t)) / t**2, (t - np.sin(t)) / t**3
+
+
+def _jr_inv_coefficient(t: float) -> float:
+    """Coefficient c of jr_inv: 1 / t^2 - (1 + cos t) / (2 t sin t)."""
+    if t < SMALL_THETA:
+        return 1 / 12 + t**2 / 720
+    return 1 / t**2 - (1 + np.cos(t)) / (2 * t * np.sin(t))
+
+
+def jr(theta: np.ndarray) -> np.ndarray:
+    """Right Jacobian of SO(3) at a rotation vector (eq. 67, closed form 143).
+
+    Maps a small change of the vector theta to a small turn in the local frame
+    at Exp(theta): Exp(theta + d) ~ Exp(theta) Exp(jr(theta) @ d)   (eq. 68).
+
+    Args:
+        theta (np.ndarray): Rotation vector, shape (3,).
+
+    Returns:
+        np.ndarray: The 3x3 matrix Jr(theta).
+    """
+    a, b = _jr_coefficients(np.linalg.norm(theta))
+    w = hat(theta)
+    return np.eye(3) - a * w + b * (w @ w)
+
+
+def jr_inv(theta: np.ndarray) -> np.ndarray:
+    """Inverse of the right Jacobian (eq. 144). Gives Log(Exp(t) Exp(d)) (eq. 70).
+
+    Args:
+        theta (np.ndarray): Rotation vector, shape (3,), with |theta| < 2 pi.
+
+    Returns:
+        np.ndarray: The 3x3 matrix Jr(theta)^-1.
+    """
+    c = _jr_inv_coefficient(np.linalg.norm(theta))
+    w = hat(theta)
+    return np.eye(3) + w / 2 + c * (w @ w)
+
+
+def jl(theta: np.ndarray) -> np.ndarray:
+    """Left Jacobian of SO(3) (eq. 71, closed form 145).
+
+    Same as jr, but the turn is in the global frame:
+    Exp(theta + d) ~ Exp(jl(theta) @ d) Exp(theta)   (eq. 72).
+
+    Args:
+        theta (np.ndarray): Rotation vector, shape (3,).
+
+    Returns:
+        np.ndarray: The 3x3 matrix Jl(theta).
+    """
+    return jr(theta).T
+
+
+def jl_inv(theta: np.ndarray) -> np.ndarray:
+    """Inverse of the left Jacobian (eq. 146). Gives Log(Exp(d) Exp(t)) (eq. 74).
+
+    Args:
+        theta (np.ndarray): Rotation vector, shape (3,), with |theta| < 2 pi.
+
+    Returns:
+        np.ndarray: The 3x3 matrix Jl(theta)^-1.
+    """
+    return jr_inv(theta).T

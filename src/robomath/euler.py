@@ -50,8 +50,8 @@ def matrix_to_euler_zyx(r: np.ndarray) -> tuple[float, float, float]:
         tuple[float, float, float]: (alpha, beta, gamma) in radians, with
             alpha and gamma in (-pi, pi] and beta in [-pi/2, pi/2].
     """
-    [r11, r12, r13] = r[0]
-    [r21, r22, r23] = r[1]
+    [r11, r12, _] = r[0]
+    [r21, r22, _] = r[1]
     [r31, r32, r33] = r[2]
 
     if abs(r31 + 1) < GIMBAL_TOL:

@@ -100,7 +100,7 @@ def quat_to_axis_angle(q: np.ndarray) -> tuple[np.ndarray, float]:
 
 
 def quat_to_matrix(q: np.ndarray) -> np.ndarray:
-    """Rotation matrix of a unit quaternion (xyzw). The exit-test function.
+    """Rotation matrix of a unit quaternion (xyzw).
 
     Args:
         q (np.ndarray): Unit quaternion, shape (4,). Not checked (boundary rule).
