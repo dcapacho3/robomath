@@ -31,17 +31,17 @@ def _apply(a: np.ndarray, v: np.ndarray) -> np.ndarray:
     return (a @ v[..., None])[..., 0]
 
 
-def twist(linear: np.ndarray, angular: np.ndarray) -> np.ndarray:
+def twist(rho: np.ndarray, theta: np.ndarray) -> np.ndarray:
     """Tangent vector from its translation part and its rotation vector.
 
     Args:
-        linear (np.ndarray): Translation part rho, shape (..., 3).
-        angular (np.ndarray): Rotation vector theta, shape (..., 3).
+        rho (np.ndarray): Translation part, shape (..., 3).
+        theta (np.ndarray): Rotation vector, shape (..., 3).
 
     Returns:
         np.ndarray: The tangent vector, shape (..., 6).
     """
-    return np.concatenate([linear, angular], axis=-1)
+    return np.concatenate([rho, theta], axis=-1)
 
 
 def linear(xi: np.ndarray) -> np.ndarray:
@@ -55,7 +55,7 @@ def angular(xi: np.ndarray) -> np.ndarray:
 
 
 def rp_to_trans(r: np.ndarray, t: np.ndarray) -> np.ndarray:
-    """4x4 pose from a rotation matrix and a translation (eq. 168).
+    """Pose from a rotation matrix and a translation (eq. 168). Also works for SE(2).
 
     Args:
         r (np.ndarray): Rotation matrices, shape (..., 3, 3).
@@ -65,15 +65,16 @@ def rp_to_trans(r: np.ndarray, t: np.ndarray) -> np.ndarray:
         np.ndarray: The poses [[R, t], [0, 1]], shape (..., 4, 4).
     """
     r, t = np.asarray(r, dtype=float), np.asarray(t, dtype=float)
-    m = np.zeros(np.broadcast_shapes(r.shape[:-2], t.shape[:-1]) + (4, 4))
-    m[..., :3, :3] = r
-    m[..., :3, 3] = t
-    m[..., 3, 3] = 1.0
+    n = r.shape[-1]  # 3 for SE(3); the same code serves SE(2) with n = 2
+    m = np.zeros(np.broadcast_shapes(r.shape[:-2], t.shape[:-1]) + (n + 1, n + 1))
+    m[..., :n, :n] = r
+    m[..., :n, n] = t
+    m[..., n, n] = 1.0
     return m
 
 
 def trans_to_rp(m: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Rotation matrix and translation of a 4x4 pose.
+    """Rotation matrix and translation of a pose. Also works for SE(2).
 
     Args:
         m (np.ndarray): Poses, shape (..., 4, 4).
@@ -83,11 +84,12 @@ def trans_to_rp(m: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
             copies of the blocks of m.
     """
     m = np.asarray(m)
-    return m[..., :3, :3].copy(), m[..., :3, 3].copy()
+    n = m.shape[-1] - 1
+    return m[..., :n, :n].copy(), m[..., :n, n].copy()
 
 
 def trans_inv(m: np.ndarray) -> np.ndarray:
-    """Inverse of a pose (eq. 170): [[R^T, -R^T t], [0, 1]].
+    """Inverse of a pose (eq. 170): [[R^T, -R^T t], [0, 1]]. Also works for SE(2).
 
     Args:
         m (np.ndarray): Poses, shape (..., 4, 4).

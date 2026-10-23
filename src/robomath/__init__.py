@@ -14,6 +14,35 @@ from .quaternions import (
     slerp,
 )
 from .rotations import inverse, rotx, roty, rotz
+from .se2 import (
+    adjoint_se2,
+    exp_vec_se2,
+    hat_se2,
+    lminus_se2,
+    log_vec_se2,
+    lplus_se2,
+    rminus_se2,
+    rplus_se2,
+    vee_se2,
+)
+from .se3 import (
+    adjoint,
+    angular,
+    exp_vec_se3,
+    hat_se3,
+    linear,
+    lminus_se3,
+    log_vec_se3,
+    lplus_se3,
+    rminus_se3,
+    rp_to_trans,
+    rplus_se3,
+    trans_inv,
+    trans_to_rp,
+    twist,
+    vee_se3,
+)
+from .so2 import exp_so2, log_so2, wrap_angle
 from .so3 import (
     axis_angle_to_matrix,
     exp_so3,
@@ -32,23 +61,6 @@ from .so3 import (
     rminus,
     rplus,
     vee,
-)
-from .transforms import (
-    adjoint,
-    angular,
-    exp_vec_se3,
-    hat_se3,
-    linear,
-    lminus_se3,
-    log_vec_se3,
-    lplus_se3,
-    rminus_se3,
-    rp_to_trans,
-    rplus_se3,
-    trans_inv,
-    trans_to_rp,
-    twist,
-    vee_se3,
 )
 
 __all__ = [
@@ -85,6 +97,18 @@ __all__ = [
     "euler_zyx_to_quat",
     "quat_to_euler_zyx",
     "nearest_rotation",
+    "exp_so2",
+    "log_so2",
+    "wrap_angle",
+    "adjoint_se2",
+    "exp_vec_se2",
+    "hat_se2",
+    "lminus_se2",
+    "log_vec_se2",
+    "lplus_se2",
+    "rminus_se2",
+    "rplus_se2",
+    "vee_se2",
     "adjoint",
     "angular",
     "exp_vec_se3",

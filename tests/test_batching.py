@@ -2,7 +2,7 @@
 
 Every function exported from robomath must accept leading dimensions: a rotation
 vector of shape (..., 3), a rotation matrix of shape (..., 3, 3), and so on.
-Functions of transforms.py that are not exported yet are skipped until they are.
+Functions of se3.py that are not exported yet are skipped until they are.
 """
 
 import numpy as np
@@ -11,7 +11,7 @@ from numpy.testing import assert_allclose
 from test_rotations import TOL
 
 import robomath as rm
-from robomath import transforms
+from robomath import se3
 
 BATCH_SHAPES = [(5,), (2, 3)]  # one leading dimension, and two
 
@@ -43,6 +43,19 @@ def _se3_matrix():
     return m
 
 
+def _pose2():
+    m = np.eye(3)
+    m[:2, :2], m[:2, 2] = rm.exp_so2(RNG.uniform(-3, 3)), RNG.normal(size=2)
+    return m
+
+
+def _se2_matrix():
+    m = np.zeros((3, 3))
+    m[:2, 2] = RNG.normal(size=2)
+    m[0, 1], m[1, 0] = -(a := RNG.normal()), a
+    return m
+
+
 # One generator per kind of argument. Each returns ONE sample.
 GENERATORS = {
     "rotvec": _rotvec,
@@ -57,9 +70,13 @@ GENERATORS = {
     "tau": lambda: RNG.normal(size=6),
     "pose": _pose,
     "se3_matrix": _se3_matrix,
+    "rot2": lambda: rm.exp_so2(RNG.uniform(-3, 3)),
+    "tau2": lambda: RNG.normal(size=3),
+    "pose2": _pose2,
+    "se2_matrix": _se2_matrix,
 }
 
-# (function name, kinds of its arguments). Functions of SE(3) live in transforms.
+# (function name, kinds of its arguments). Functions of SE(3) live in se3.
 CASES = [
     ("hat", ["rotvec"]),
     ("vee", ["skew"]),
@@ -109,11 +126,23 @@ CASES = [
     ("rminus_se3", ["pose", "pose"]),
     ("lplus_se3", ["tau", "pose"]),
     ("lminus_se3", ["pose", "pose"]),
+    ("exp_so2", ["angle"]),
+    ("log_so2", ["rot2"]),
+    ("wrap_angle", ["angle"]),
+    ("hat_se2", ["tau2"]),
+    ("vee_se2", ["se2_matrix"]),
+    ("exp_vec_se2", ["tau2"]),
+    ("log_vec_se2", ["pose2"]),
+    ("adjoint_se2", ["pose2"]),
+    ("rplus_se2", ["pose2", "tau2"]),
+    ("rminus_se2", ["pose2", "pose2"]),
+    ("lplus_se2", ["tau2", "pose2"]),
+    ("lminus_se2", ["pose2", "pose2"]),
 ]
 
 
 def _function(name):
-    return getattr(rm, name, None) or getattr(transforms, name)
+    return getattr(rm, name, None) or getattr(se3, name)
 
 
 def _as_tuple(result):
