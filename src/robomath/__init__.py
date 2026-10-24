@@ -1,6 +1,15 @@
 """Declare all public usable functions from robomath."""
 
 from .euler import euler_zyx_to_matrix, matrix_to_euler_zyx
+from .geodesic import (
+    distance_so3,
+    interp_se2,
+    interp_se3,
+    interp_so3,
+    mean_se2,
+    mean_se3,
+    mean_so3,
+)
 from .quaternions import (
     axis_angle_to_quat,
     euler_zyx_to_quat,
@@ -97,6 +106,13 @@ __all__ = [
     "euler_zyx_to_quat",
     "quat_to_euler_zyx",
     "nearest_rotation",
+    "distance_so3",
+    "interp_se2",
+    "interp_se3",
+    "interp_so3",
+    "mean_se2",
+    "mean_se3",
+    "mean_so3",
     "exp_so2",
     "log_so2",
     "wrap_angle",

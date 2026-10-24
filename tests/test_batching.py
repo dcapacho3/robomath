@@ -56,6 +56,11 @@ def _se2_matrix():
     return m
 
 
+def _cluster(make):
+    """Four items close together, so their mean is unique."""
+    return lambda: np.array([make(RNG.normal(size=3) * 0.2) for _ in range(4)])
+
+
 # One generator per kind of argument. Each returns ONE sample.
 GENERATORS = {
     "rotvec": _rotvec,
@@ -70,6 +75,9 @@ GENERATORS = {
     "tau": lambda: RNG.normal(size=6),
     "pose": _pose,
     "se3_matrix": _se3_matrix,
+    "rotset": _cluster(rm.exp_vec),
+    "poseset": _cluster(lambda v: rm.exp_vec_se3(np.r_[RNG.normal(size=3), v])),
+    "poseset2": _cluster(lambda v: rm.exp_vec_se2(np.r_[RNG.normal(size=2), v[2]])),
     "rot2": lambda: rm.exp_so2(RNG.uniform(-3, 3)),
     "tau2": lambda: RNG.normal(size=3),
     "pose2": _pose2,
@@ -126,6 +134,13 @@ CASES = [
     ("rminus_se3", ["pose", "pose"]),
     ("lplus_se3", ["tau", "pose"]),
     ("lminus_se3", ["pose", "pose"]),
+    ("distance_so3", ["rotmat", "rotmat"]),
+    ("interp_so3", ["rotmat", "rotmat", "fraction"]),
+    ("interp_se3", ["pose", "pose", "fraction"]),
+    ("mean_so3", ["rotset"]),
+    ("mean_se3", ["poseset"]),
+    ("interp_se2", ["pose2", "pose2", "fraction"]),
+    ("mean_se2", ["poseset2"]),
     ("exp_so2", ["angle"]),
     ("log_so2", ["rot2"]),
     ("wrap_angle", ["angle"]),
