@@ -3,6 +3,10 @@
 Groups: SO(2), SO(3), SE(2), SE(3), Sim(3) (pose with a scale, the scale last in the
 tangent vector) and SE_2(3) (rotation, velocity and position). The Transform class
 wraps SE(3) only.
+
+Planned: kinematics (screw axes, product of exponentials, forward
+and inverse kinematics, Jacobians), trajectories on SO(3) and SE(3), and covariance
+propagation. Estimators, simulators and ROS code stay outside this package.
 """
 
 from .convert import (

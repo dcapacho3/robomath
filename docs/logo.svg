@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" width="720" height="200" role="img" aria-labelledby="t d">
+  <title id="t">robomath</title>
+  <desc id="d">A coordinate frame with a rotation arrow around its vertical axis, next to the word robomath.</desc>
+  <rect width="720" height="200" rx="28" fill="#0f2742"/>
+  <!-- coordinate frame: x toward the viewer, y to the right, z up -->
+  <g transform="translate(40,20)" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="80" y1="112" x2="80" y2="26" stroke="#4da3ff" stroke-width="7"/>
+    <polygon points="80,10 70,32 90,32" fill="#4da3ff" stroke="none"/>
+    <line x1="80" y1="112" x2="148" y2="86" stroke="#4fd18b" stroke-width="7"/>
+    <polygon points="164,80 142,74 150,95" fill="#4fd18b" stroke="none"/>
+    <line x1="80" y1="112" x2="30" y2="144" stroke="#ff6b6b" stroke-width="7"/>
+    <polygon points="16,153 28,134 40,152" fill="#ff6b6b" stroke="none"/>
+    <circle cx="80" cy="112" r="7" fill="#ffffff" stroke="none"/>
+    <!-- rotation about z -->
+    <path d="M 34.7 63.2 A 46 16 0 1 1 103 79.9" stroke="#ffc857" stroke-width="6"/>
+    <polygon points="93,82 104,86 102,74" fill="#ffc857" stroke="none"/>
+  </g>
+  <text x="236" y="120" font-family="'DejaVu Sans Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace" font-size="78" font-weight="700" fill="#ffffff">robo</text>
+  <text x="424" y="120" font-family="'DejaVu Sans Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace" font-size="78" font-weight="700" fill="#4fd1c5">math</text>
+  <text x="240" y="158" font-family="'DejaVu Sans', Helvetica, Arial, sans-serif" font-size="17" fill="#9fb8d6">The maths of robot pose and motion.</text>
+</svg>

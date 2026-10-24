@@ -10,7 +10,7 @@ Quaternion (w, x, y, z), scalar first: Drake, MuJoCo, Ceres.
 Tangent vector (translation, rotation): Sola's paper, Sophus, manif, Pinocchio.
 Tangent vector (rotation, translation): Modern Robotics, Drake, MuJoCo, GTSAM Pose3.
 
-Not here yet, to add when a use needs them: poses with the camera convention
+Not here yet: poses with the camera convention
 (OpenCV and COLMAP store world-to-camera, so the inverse of ours), other Euler
 sequences, SE(2) layouts such as GTSAM's, and ROS message classes (this module takes
 plain arrays, so it needs no ROS install).
