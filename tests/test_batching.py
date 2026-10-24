@@ -61,6 +61,13 @@ def _cluster(make):
     return lambda: np.array([make(RNG.normal(size=3) * 0.2) for _ in range(4)])
 
 
+def _tau(n):
+    """A tangent vector of length n whose rotation part (entries 3:6) is below pi."""
+    tau = RNG.normal(size=n)
+    tau[3:6] *= RNG.uniform(0.1, 3.0) / np.linalg.norm(tau[3:6])
+    return tau
+
+
 # One generator per kind of argument. Each returns ONE sample.
 GENERATORS = {
     "rotvec": _rotvec,
@@ -79,6 +86,13 @@ GENERATORS = {
     "poseset": _cluster(lambda v: rm.exp_vec_se3(np.r_[RNG.normal(size=3), v])),
     "poseset2": _cluster(lambda v: rm.exp_vec_se2(np.r_[RNG.normal(size=2), v[2]])),
     "cloud": lambda: RNG.normal(size=(8, 3)),
+    "sim3_matrix": lambda: rm.hat_sim3(_tau(7)),
+    "se23_matrix": lambda: rm.hat_se23(_tau(9)),
+    "scale": lambda: RNG.uniform(0.3, 3.0),
+    "tau7": lambda: _tau(7),
+    "sim3": lambda: rm.exp_vec_sim3(_tau(7)),
+    "tau9": lambda: _tau(9),
+    "se23": lambda: rm.exp_vec_se23(_tau(9)),
     "rot2": lambda: rm.exp_so2(RNG.uniform(-3, 3)),
     "tau2": lambda: RNG.normal(size=3),
     "pose2": _pose2,
@@ -147,6 +161,30 @@ CASES = [
     ("swap_twist", ["tau"]),
     ("pq_to_trans", ["rotvec", "quat"]),
     ("trans_to_pq", ["pose"]),
+    ("hat_sim3", ["tau7"]),
+    ("vee_sim3", ["sim3_matrix"]),
+    ("exp_vec_sim3", ["tau7"]),
+    ("log_vec_sim3", ["sim3"]),
+    ("adjoint_sim3", ["sim3"]),
+    ("sim3_inv", ["sim3"]),
+    ("sim3_to_srt", ["sim3"]),
+    ("srt_to_sim3", ["scale", "rotmat", "rotvec"]),
+    ("rplus_sim3", ["sim3", "tau7"]),
+    ("rminus_sim3", ["sim3", "sim3"]),
+    ("lplus_sim3", ["tau7", "sim3"]),
+    ("lminus_sim3", ["sim3", "sim3"]),
+    ("hat_se23", ["tau9"]),
+    ("exp_vec_se23", ["tau9"]),
+    ("log_vec_se23", ["se23"]),
+    ("adjoint_se23", ["se23"]),
+    ("se23_inv", ["se23"]),
+    ("se23_to_rvp", ["se23"]),
+    ("rvp_to_se23", ["rotmat", "rotvec", "rotvec"]),
+    ("rplus_se23", ["se23", "tau9"]),
+    ("rminus_se23", ["se23", "se23"]),
+    ("lplus_se23", ["tau9", "se23"]),
+    ("lminus_se23", ["se23", "se23"]),
+    ("vee_se23", ["se23_matrix"]),
     ("kabsch", ["cloud", "cloud"]),
     ("umeyama", ["cloud", "cloud"]),
     ("exp_so2", ["angle"]),

@@ -1,7 +1,8 @@
 """Declare all public usable functions from robomath.
 
-Still to add: Sim(3) (a pose with a scale; the scale goes last in the tangent
-vector), SE_2(3) (pose plus velocity), and a Transform class on top of the functions.
+Groups: SO(2), SO(3), SE(2), SE(3), Sim(3) (pose with a scale, the scale last in the
+tangent vector) and SE_2(3) (rotation, velocity and position). The Transform class
+wraps SE(3) only.
 """
 
 from .convert import (
@@ -63,6 +64,34 @@ from .se3 import (
     twist,
     vee_se3,
 )
+from .se23 import (
+    adjoint_se23,
+    exp_vec_se23,
+    hat_se23,
+    lminus_se23,
+    log_vec_se23,
+    lplus_se23,
+    rminus_se23,
+    rplus_se23,
+    rvp_to_se23,
+    se23_inv,
+    se23_to_rvp,
+    vee_se23,
+)
+from .sim3 import (
+    adjoint_sim3,
+    exp_vec_sim3,
+    hat_sim3,
+    lminus_sim3,
+    log_vec_sim3,
+    lplus_sim3,
+    rminus_sim3,
+    rplus_sim3,
+    sim3_inv,
+    sim3_to_srt,
+    srt_to_sim3,
+    vee_sim3,
+)
 from .so2 import exp_so2, log_so2, wrap_angle
 from .so3 import (
     axis_angle_to_matrix,
@@ -83,6 +112,7 @@ from .so3 import (
     rplus,
     vee,
 )
+from .transform import Transform
 
 __all__ = [
     "axis_angle_to_matrix",
@@ -118,6 +148,31 @@ __all__ = [
     "euler_zyx_to_quat",
     "quat_to_euler_zyx",
     "nearest_rotation",
+    "Transform",
+    "adjoint_sim3",
+    "exp_vec_sim3",
+    "hat_sim3",
+    "lminus_sim3",
+    "log_vec_sim3",
+    "lplus_sim3",
+    "rminus_sim3",
+    "rplus_sim3",
+    "sim3_inv",
+    "sim3_to_srt",
+    "srt_to_sim3",
+    "vee_sim3",
+    "adjoint_se23",
+    "exp_vec_se23",
+    "hat_se23",
+    "lminus_se23",
+    "log_vec_se23",
+    "lplus_se23",
+    "rminus_se23",
+    "rplus_se23",
+    "rvp_to_se23",
+    "se23_inv",
+    "se23_to_rvp",
+    "vee_se23",
     "pq_to_trans",
     "quat_wxyz_to_xyzw",
     "quat_xyzw_to_wxyz",
