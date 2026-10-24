@@ -1,5 +1,16 @@
-"""Declare all public usable functions from robomath."""
+"""Declare all public usable functions from robomath.
 
+Still to add: Sim(3) (a pose with a scale; the scale goes last in the tangent
+vector), SE_2(3) (pose plus velocity), and a Transform class on top of the functions.
+"""
+
+from .convert import (
+    pq_to_trans,
+    quat_wxyz_to_xyzw,
+    quat_xyzw_to_wxyz,
+    swap_twist,
+    trans_to_pq,
+)
 from .euler import euler_zyx_to_matrix, matrix_to_euler_zyx
 from .geodesic import (
     distance_so3,
@@ -107,6 +118,11 @@ __all__ = [
     "euler_zyx_to_quat",
     "quat_to_euler_zyx",
     "nearest_rotation",
+    "pq_to_trans",
+    "quat_wxyz_to_xyzw",
+    "quat_xyzw_to_wxyz",
+    "swap_twist",
+    "trans_to_pq",
     "kabsch",
     "umeyama",
     "distance_so3",
