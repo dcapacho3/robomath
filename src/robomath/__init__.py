@@ -22,6 +22,7 @@ from .quaternions import (
     quat_to_matrix,
     slerp,
 )
+from .registration import kabsch, umeyama
 from .rotations import inverse, rotx, roty, rotz
 from .se2 import (
     adjoint_se2,
@@ -106,6 +107,8 @@ __all__ = [
     "euler_zyx_to_quat",
     "quat_to_euler_zyx",
     "nearest_rotation",
+    "kabsch",
+    "umeyama",
     "distance_so3",
     "interp_se2",
     "interp_se3",
