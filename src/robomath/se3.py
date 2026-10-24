@@ -19,16 +19,12 @@ can be read in one place (LINEAR and ANGULAR below).
 
 import numpy as np
 
+from ._util import apply
 from .so3 import exp_vec, hat, jl, jl_inv, log_vec, vee
 
 # The one place that fixes the order of a tangent vector (eq. 169).
 LINEAR = slice(0, 3)
 ANGULAR = slice(3, 6)
-
-
-def _apply(a: np.ndarray, v: np.ndarray) -> np.ndarray:
-    """Matrix-vector product for stacks: a (..., n, n) times v (..., n)."""
-    return (a @ v[..., None])[..., 0]
 
 
 def twist(rho: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -99,7 +95,7 @@ def trans_inv(m: np.ndarray) -> np.ndarray:
     """
     r, t = trans_to_rp(m)
     rt = np.swapaxes(r, -1, -2)
-    return rp_to_trans(rt, -_apply(rt, t))
+    return rp_to_trans(rt, -apply(rt, t))
 
 
 def hat_se3(tau: np.ndarray) -> np.ndarray:
@@ -143,7 +139,7 @@ def exp_vec_se3(tau: np.ndarray) -> np.ndarray:
     tau = np.asarray(tau, dtype=float)
     theta = angular(tau)
     # V(theta) of eq. 174 is the left Jacobian of SO(3).
-    return rp_to_trans(exp_vec(theta), _apply(jl(theta), linear(tau)))
+    return rp_to_trans(exp_vec(theta), apply(jl(theta), linear(tau)))
 
 
 def log_vec_se3(m: np.ndarray) -> np.ndarray:
@@ -157,7 +153,7 @@ def log_vec_se3(m: np.ndarray) -> np.ndarray:
     """
     r, t = trans_to_rp(m)
     theta = log_vec(r)
-    return twist(_apply(jl_inv(theta), t), theta)
+    return twist(apply(jl_inv(theta), t), theta)
 
 
 def adjoint(m: np.ndarray) -> np.ndarray:

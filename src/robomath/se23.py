@@ -15,15 +15,11 @@ Every function accepts leading batch dimensions.
 
 import numpy as np
 
+from ._util import apply
 from .se3 import angular, linear
 from .so3 import exp_vec, hat, jl, jl_inv, log_vec, vee
 
 VELOCITY = slice(6, 9)  # the velocity part of a tangent vector
-
-
-def _apply(a: np.ndarray, v: np.ndarray) -> np.ndarray:
-    """Matrix-vector product for stacks: a (..., n, n) times v (..., n)."""
-    return (a @ v[..., None])[..., 0]
 
 
 def rvp_to_se23(r: np.ndarray, v: np.ndarray, p: np.ndarray) -> np.ndarray:
@@ -73,7 +69,7 @@ def se23_inv(m: np.ndarray) -> np.ndarray:
     """
     r, v, p = se23_to_rvp(m)
     rt = np.swapaxes(r, -1, -2)
-    return rvp_to_se23(rt, -_apply(rt, v), -_apply(rt, p))
+    return rvp_to_se23(rt, -apply(rt, v), -apply(rt, p))
 
 
 def hat_se23(tau: np.ndarray) -> np.ndarray:
@@ -98,7 +94,7 @@ def exp_vec_se23(tau: np.ndarray) -> np.ndarray:
     theta = angular(tau)
     v = jl(theta)
     return rvp_to_se23(
-        exp_vec(theta), _apply(v, tau[..., VELOCITY]), _apply(v, linear(tau))
+        exp_vec(theta), apply(v, tau[..., VELOCITY]), apply(v, linear(tau))
     )
 
 
@@ -107,7 +103,7 @@ def log_vec_se23(m: np.ndarray) -> np.ndarray:
     r, v, p = se23_to_rvp(m)
     theta = log_vec(r)
     v_inv = jl_inv(theta)
-    return np.concatenate([_apply(v_inv, p), theta, _apply(v_inv, v)], axis=-1)
+    return np.concatenate([apply(v_inv, p), theta, apply(v_inv, v)], axis=-1)
 
 
 def adjoint_se23(m: np.ndarray) -> np.ndarray:

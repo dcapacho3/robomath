@@ -17,6 +17,7 @@ Every function accepts leading batch dimensions.
 
 import numpy as np
 
+from ._util import apply
 from .se3 import angular, linear
 from .so3 import exp_vec, hat, log_vec, vee
 
@@ -42,11 +43,6 @@ def _phi1(a: np.ndarray) -> np.ndarray:
         phi = phi @ (eye + exp_b) / 2
         exp_b = exp_b @ exp_b
     return phi
-
-
-def _apply(a: np.ndarray, v: np.ndarray) -> np.ndarray:
-    """Matrix-vector product for stacks: a (..., n, n) times v (..., n)."""
-    return (a @ v[..., None])[..., 0]
 
 
 def srt_to_sim3(s: np.ndarray, r: np.ndarray, t: np.ndarray) -> np.ndarray:
@@ -99,7 +95,7 @@ def sim3_inv(m: np.ndarray) -> np.ndarray:
     a_inv = np.swapaxes(a, -1, -2) / s2[..., None, None]  # (s R)^-1 = (s R)^T / s^2
     out = np.zeros(m.shape)
     out[..., :3, :3] = a_inv
-    out[..., :3, 3] = -_apply(a_inv, t)
+    out[..., :3, 3] = -apply(a_inv, t)
     out[..., 3, 3] = 1.0
     return out
 
@@ -127,7 +123,7 @@ def exp_vec_sim3(tau: np.ndarray) -> np.ndarray:
     tau = np.asarray(tau, dtype=float)
     theta, sigma = angular(tau), tau[..., SCALE]
     a = hat(theta) + sigma[..., None, None] * np.eye(3)
-    return srt_to_sim3(np.exp(sigma), exp_vec(theta), _apply(_phi1(a), linear(tau)))
+    return srt_to_sim3(np.exp(sigma), exp_vec(theta), apply(_phi1(a), linear(tau)))
 
 
 def log_vec_sim3(m: np.ndarray) -> np.ndarray:
