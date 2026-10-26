@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/dcapacho3/robomath/actions/workflows/ci_pytest.yml"><img src="https://github.com/dcapacho3/robomath/actions/workflows/ci_pytest.yml/badge.svg" alt="CI"></a>
+  <a href="https://pypi.org/project/robomath/"><img src="https://img.shields.io/pypi/v/robomath" alt="PyPI version"></a>
   <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/dependencies-NumPy-lightgrey" alt="Depends on NumPy only">
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen" alt="Coverage 100%">
@@ -40,15 +41,12 @@ not do.
 
 ## Install
 
-Robomath is not on PyPI yet. Clone the repository and install it in editable mode:
-
 ```bash
-git clone https://github.com/dcapacho3/robomath.git
-cd robomath
-pip install -e .
+pip install robomath
 ```
 
-It needs Python 3.12 or later and NumPy. Check the install:
+It needs Python 3.12 or later and NumPy. To work on the code, see
+[Contributing](#contributing). Check the install:
 
 ```bash
 python -c "import robomath as rm; print(rm.rotz(3.14159 / 2).round(2))"
