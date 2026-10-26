@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/dependencies-NumPy-lightgrey" alt="Depends on NumPy only">
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen" alt="Coverage 100%">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
+  <img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="Apache 2.0 license">
 </p>
 
 **The maths of robot pose and motion.**
@@ -581,4 +581,4 @@ Report bugs and ideas on the [issue tracker](https://github.com/dcapacho3/roboma
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache 2.0. Copyright 2026 David Capacho. See [LICENSE](LICENSE).
