@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="robomath" width="560">
+  <img src="https://raw.githubusercontent.com/dcapacho3/robomath/main/docs/logo.svg" alt="robomath" width="560">
 </p>
 
 <p align="center">
@@ -581,4 +581,4 @@ Report bugs and ideas on the [issue tracker](https://github.com/dcapacho3/roboma
 
 ## License
 
-Apache 2.0. Copyright 2026 David Capacho. See [LICENSE](LICENSE).
+Apache 2.0. Copyright 2026 David Capacho. See [LICENSE](https://github.com/dcapacho3/robomath/blob/main/LICENSE).
