@@ -9,6 +9,7 @@
   <img src="https://img.shields.io/badge/dependencies-NumPy-lightgrey" alt="Depends on NumPy only">
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen" alt="Coverage 100%">
   <img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="Apache 2.0 license">
+  <a href="https://github.com/dcapacho3/robomath/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-0.1.2-blue" alt="Changelog"></a>
 </p>
 
 **The maths of robot pose and motion.**
@@ -37,7 +38,7 @@ not do.
 [The groups](#the-groups) · [Guide](#guide) · [API reference](#api-reference) ·
 [Batches and speed](#batches-and-speed) · [Working with other libraries](#working-with-other-libraries) ·
 [Accuracy and testing](#accuracy-and-testing) · [Limits](#limits) ·
-[To do](#to-do) · [Learn more](#learn-more) · [Contributing](#contributing) · [License](#license)
+[To do](#to-do) · [Changelog](https://github.com/dcapacho3/robomath/blob/main/CHANGELOG.md) · [Learn more](#learn-more) · [Contributing](#contributing) · [License](#license)
 
 ## Install
 
