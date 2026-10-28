@@ -3,6 +3,16 @@
 All notable changes to robomath. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+- `act_sim3` failed when the pose was a nested list. It now accepts one, as `act_se2`
+  and `act_se3` do.
+
+### Changed
+- The `act_*` docstrings say that the points need an N axis: one point has shape
+  `(1, 2)` or `(1, 3)`.
+
 ## [0.1.2] - 2026-10-27
 
 ### Added

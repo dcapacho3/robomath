@@ -99,7 +99,10 @@ def trans_inv(m: np.ndarray) -> np.ndarray:
 
 
 def act_se3(m: np.ndarray, points: np.ndarray) -> np.ndarray:
-    """Move points by poses: p_a = R p_b + t. Shapes (..., 4, 4), (..., N, 3)."""
+    """Move points by poses: p_a = R p_b + t. Shapes (..., 4, 4), (..., N, 3).
+
+    The points need an N axis: one point has shape (1, 3).
+    """
     r, t = trans_to_rp(m)
     return points @ np.swapaxes(r, -1, -2) + t[..., None, :]
 

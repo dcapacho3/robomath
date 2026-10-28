@@ -86,3 +86,11 @@ def test_act_sim3_scales_then_moves():
     assert_allclose(
         rm.act_sim3(rm.srt_to_sim3(s, r, t), p), s * p @ r.T + t, rtol=0, atol=TOL
     )
+
+
+def test_act_accepts_lists_for_the_pose():
+    """A pose given as nested lists works for all three act functions."""
+    p = RNG.normal(size=(4, 3))
+    assert_allclose(rm.act_sim3(np.eye(4).tolist(), p), p, rtol=0, atol=0)
+    assert_allclose(rm.act_se3(np.eye(4).tolist(), p), p, rtol=0, atol=0)
+    assert_allclose(rm.act_se2(np.eye(3).tolist(), p[:, :2]), p[:, :2], atol=0)

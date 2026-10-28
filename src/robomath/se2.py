@@ -57,7 +57,10 @@ def se2_to_xyt(m: np.ndarray) -> np.ndarray:
 
 
 def act_se2(m: np.ndarray, points: np.ndarray) -> np.ndarray:
-    """Move points by poses: p_a = R p_b + t. Shapes (..., 3, 3), (..., N, 2)."""
+    """Move points by poses: p_a = R p_b + t. Shapes (..., 3, 3), (..., N, 2).
+
+    The points need an N axis: one point has shape (1, 2).
+    """
     r, t = trans_to_rp(m)
     return points @ np.swapaxes(r, -1, -2) + t[..., None, :]
 

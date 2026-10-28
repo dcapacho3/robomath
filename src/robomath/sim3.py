@@ -101,7 +101,11 @@ def sim3_inv(m: np.ndarray) -> np.ndarray:
 
 
 def act_sim3(m: np.ndarray, points: np.ndarray) -> np.ndarray:
-    """Move points: p_a = s R p_b + t. Shapes (..., 4, 4), (..., N, 3)."""
+    """Move points: p_a = s R p_b + t. Shapes (..., 4, 4), (..., N, 3).
+
+    The points need an N axis: one point has shape (1, 3).
+    """
+    m = np.asarray(m, dtype=float)
     a, t = m[..., :3, :3], m[..., :3, 3]
     return points @ np.swapaxes(a, -1, -2) + t[..., None, :]
 
