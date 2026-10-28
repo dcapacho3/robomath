@@ -2,11 +2,11 @@
 
 Groups: SO(2), SO(3), SE(2), SE(3), Sim(3) (pose with a scale, the scale last in the
 tangent vector) and SE_2(3) (rotation, velocity and position). The Transform class
-wraps SE(3) only.
+wraps SE(3) only, and Transform2D wraps SE(2).
 
-Planned: kinematics (screw axes, product of exponentials, forward
-and inverse kinematics, Jacobians), trajectories on SO(3) and SE(3), and covariance
-propagation. Estimators, simulators and ROS code stay outside this package.
+Planned: covariance propagation, then kinematics (screw axes, product of
+exponentials, forward and inverse kinematics, Jacobians) and trajectories on SO(3)
+and SE(3). Estimators, simulators and ROS code stay outside this package.
 """
 
 from .convert import (
@@ -41,6 +41,7 @@ from .quaternions import (
 from .registration import kabsch, umeyama
 from .rotations import inverse, rotx, roty, rotz
 from .se2 import (
+    act_se2,
     adjoint_se2,
     exp_vec_se2,
     hat_se2,
@@ -49,9 +50,12 @@ from .se2 import (
     lplus_se2,
     rminus_se2,
     rplus_se2,
+    se2_to_xyt,
     vee_se2,
+    xyt_to_se2,
 )
 from .se3 import (
+    act_se3,
     adjoint,
     angular,
     exp_vec_se3,
@@ -83,6 +87,7 @@ from .se23 import (
     vee_se23,
 )
 from .sim3 import (
+    act_sim3,
     adjoint_sim3,
     exp_vec_sim3,
     hat_sim3,
@@ -117,6 +122,7 @@ from .so3 import (
     vee,
 )
 from .transform import Transform
+from .transform2d import Transform2D
 
 __all__ = [
     "axis_angle_to_matrix",
@@ -153,6 +159,12 @@ __all__ = [
     "quat_to_euler_zyx",
     "nearest_rotation",
     "Transform",
+    "Transform2D",
+    "act_se2",
+    "act_se3",
+    "act_sim3",
+    "se2_to_xyt",
+    "xyt_to_se2",
     "adjoint_sim3",
     "exp_vec_sim3",
     "hat_sim3",

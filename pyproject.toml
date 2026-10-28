@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robomath"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   { name="David Capacho Parra", email="dcapacho3@gmail.com" },
 ]
@@ -29,6 +29,7 @@ license-files = ["LICEN[CS]E*"]
 Homepage = "https://github.com/dcapacho3/robomath"
 Source = "https://github.com/dcapacho3/robomath"
 Issues = "https://github.com/dcapacho3/robomath/issues"
+Changelog = "https://github.com/dcapacho3/robomath/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = ["pytest>=8", "pre-commit>=4.6.2", "pytest-cov>=7.1.0", "modern_robotics>=1.1.0", "scipy>=1.18.1", "hypothesis>=6.100"]

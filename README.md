@@ -295,8 +295,22 @@ robot = rm.rplus_se2(robot, [0.5, 0.0, 0.1])
 robot[:2, 2]  # -> [1.975, 1.4992]
 ```
 
-`exp_so2`, `log_so2` and `wrap_angle` handle plain angles. `rp_to_trans`,
+`exp_so2`, `log_so2` and `wrap_angle` handle plain angles, in (-pi, pi]. `rp_to_trans`,
 `trans_to_rp` and `trans_inv` accept 3x3 poses as well as 4x4.
+
+Robots report a planar pose as `(x, y, angle)`. `xyt_to_se2` and `se2_to_xyt` convert
+it to the matrix and back. These numbers are coordinates, not a tangent vector, so
+`xyt_to_se2` is not `exp_vec_se2`; the two agree only at angle 0. `act_se2` moves
+points by a pose, and `Transform2D` is the class for it, as `Transform` is for 3D.
+
+```python
+robot = rm.Transform2D.from_xyt([2.0, 1.0, np.pi / 2])  # at (2, 1) facing +y
+robot @ [1.0, 0.0]  # -> [2, 2]: a point 1 ahead of the robot, in the world frame
+robot.inverse().xyt  # -> [-1, 2, -1.5708]: the world origin, seen from the robot
+rm.act_se2(rm.xyt_to_se2([1.0, 2.0, np.pi / 2]), [[1.0, 0.0]])  # -> [[1, 3]]
+```
+
+`act_se3` and `act_sim3` do the same for 3D poses and similarities.
 
 ### Poses with a scale: Sim(3), and fitting points
 
@@ -384,16 +398,16 @@ equation where one applies; use `help(rm.name)`.
 
 **SE(2)**
 `hat_se2`, `vee_se2`, `exp_vec_se2`, `log_vec_se2`, `adjoint_se2`, `rplus_se2`,
-`rminus_se2`, `lplus_se2`, `lminus_se2`
+`rminus_se2`, `lplus_se2`, `lminus_se2`, `xyt_to_se2`, `se2_to_xyt`, `act_se2`
 
 **SE(3)**
 `twist`, `linear`, `angular`, `rp_to_trans`, `trans_to_rp`, `trans_inv`, `hat_se3`,
 `vee_se3`, `exp_vec_se3`, `log_vec_se3`, `adjoint`, `rplus_se3`, `rminus_se3`,
-`lplus_se3`, `lminus_se3`
+`lplus_se3`, `lminus_se3`, `act_se3`
 
 **Sim(3)**
 `srt_to_sim3`, `sim3_to_srt`, `sim3_inv`, `hat_sim3`, `vee_sim3`, `exp_vec_sim3`,
-`log_vec_sim3`, `adjoint_sim3`, `rplus_sim3`, `rminus_sim3`, `lplus_sim3`, `lminus_sim3`
+`log_vec_sim3`, `adjoint_sim3`, `rplus_sim3`, `rminus_sim3`, `lplus_sim3`, `lminus_sim3`, `act_sim3`
 
 **SE₂(3)**
 `rvp_to_se23`, `se23_to_rvp`, `se23_inv`, `hat_se23`, `vee_se23`, `exp_vec_se23`,
@@ -409,8 +423,8 @@ equation where one applies; use `help(rm.name)`.
 **Layout conversion**
 `quat_xyzw_to_wxyz`, `quat_wxyz_to_xyzw`, `swap_twist`, `pq_to_trans`, `trans_to_pq`
 
-**Class**
-`Transform`
+**Classes**
+`Transform`, `Transform2D`
 
 ## Batches and speed
 
@@ -518,17 +532,19 @@ The tests use a tolerance of 1e-12 for one operation and 1e-9 for chains of seve
 - **Registration.** `kabsch` and `umeyama` need known point matches and at least three
   points not on one line. They do not reject outliers.
 - **Sim(3) speed.** About 45 µs per single call.
-- **Classes.** Only SE(3) has a class, `Transform`. The other groups are functions.
+- **Classes.** SE(3) and SE(2) have classes, `Transform` and `Transform2D`. The other
+  groups are functions.
 
 ## To do
 
+- [ ] **Uncertainty**: moving a covariance through plus, minus and the Jacobians.
+  Next release.
 - [ ] **Kinematics**: screw axes, product of exponentials, forward and inverse
   kinematics, body and space Jacobians.
 - [ ] **Trajectories**: time scaling and smooth paths on SO(3) and SE(3).
-- [ ] **Uncertainty**: moving a covariance through plus, minus and the Jacobians.
 - [ ] **More layouts** in `convert`: camera-frame poses, other Euler sequences, SE(2)
   orderings of other libraries.
-- [ ] **Classes** for the other groups (SE(2), Sim(3), SE₂(3)) next to `Transform`.
+- [ ] **Classes** for Sim(3) and SE₂(3) next to `Transform` and `Transform2D`.
 - [ ] **Single precision** (`float32`) and an autodiff-friendly path.
 - [ ] **Other languages**: the same conventions and tests in Rust and in C++. Ideas, not
   started. The conventions above are the contract a port must keep, and this

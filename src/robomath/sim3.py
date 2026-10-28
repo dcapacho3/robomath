@@ -100,6 +100,12 @@ def sim3_inv(m: np.ndarray) -> np.ndarray:
     return out
 
 
+def act_sim3(m: np.ndarray, points: np.ndarray) -> np.ndarray:
+    """Move points: p_a = s R p_b + t. Shapes (..., 4, 4), (..., N, 3)."""
+    a, t = m[..., :3, :3], m[..., :3, 3]
+    return points @ np.swapaxes(a, -1, -2) + t[..., None, :]
+
+
 def hat_sim3(tau: np.ndarray) -> np.ndarray:
     """4x4 matrix [[sigma I + [theta]x, rho], [0, 0]] of a tangent vector (..., 7)."""
     tau = np.asarray(tau, dtype=float)

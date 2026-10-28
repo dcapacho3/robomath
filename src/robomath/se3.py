@@ -98,6 +98,12 @@ def trans_inv(m: np.ndarray) -> np.ndarray:
     return rp_to_trans(rt, -apply(rt, t))
 
 
+def act_se3(m: np.ndarray, points: np.ndarray) -> np.ndarray:
+    """Move points by poses: p_a = R p_b + t. Shapes (..., 4, 4), (..., N, 3)."""
+    r, t = trans_to_rp(m)
+    return points @ np.swapaxes(r, -1, -2) + t[..., None, :]
+
+
 def hat_se3(tau: np.ndarray) -> np.ndarray:
     """4x4 matrix of a tangent vector tau = (rho, theta) (eq. 169).
 

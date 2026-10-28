@@ -97,6 +97,9 @@ GENERATORS = {
     "tau2": lambda: RNG.normal(size=3),
     "pose2": _pose2,
     "se2_matrix": _se2_matrix,
+    "xyt": lambda: np.array([*RNG.normal(size=2), RNG.uniform(-np.pi, np.pi)]),
+    "points2": lambda: RNG.normal(size=(6, 2)),
+    "points3": lambda: RNG.normal(size=(6, 3)),
 }
 
 # (function name, kinds of its arguments). Functions of SE(3) live in se3.
@@ -199,6 +202,11 @@ CASES = [
     ("rminus_se2", ["pose2", "pose2"]),
     ("lplus_se2", ["tau2", "pose2"]),
     ("lminus_se2", ["pose2", "pose2"]),
+    ("xyt_to_se2", ["xyt"]),
+    ("se2_to_xyt", ["pose2"]),
+    ("act_se2", ["pose2", "points2"]),
+    ("act_se3", ["pose", "points3"]),
+    ("act_sim3", ["sim3", "points3"]),
 ]
 
 

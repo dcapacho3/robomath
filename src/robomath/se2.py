@@ -37,6 +37,31 @@ def _v_scalars(theta: float) -> tuple[float, float]:
     return math.sin(theta) / theta, 2 * math.sin(theta / 2) ** 2 / theta
 
 
+def xyt_to_se2(xyt: np.ndarray) -> np.ndarray:
+    """Pose matrix of a planar pose (x, y, angle), shape (..., 3) -> (..., 3, 3).
+
+    The numbers are the coordinates of the pose, not a tangent vector: this is not
+    exp_vec_se2 of the same three numbers. The two agree only when the angle is 0.
+    """
+    xyt = np.asarray(xyt, dtype=float)
+    return rp_to_trans(exp_so2(xyt[..., 2]), xyt[..., :2])
+
+
+def se2_to_xyt(m: np.ndarray) -> np.ndarray:
+    """Planar pose (x, y, angle) of a pose matrix, angle in (-pi, pi].
+
+    Shape (..., 3, 3) -> (..., 3). The inverse of xyt_to_se2, and not log_vec_se2.
+    """
+    r, t = trans_to_rp(m)
+    return np.concatenate([t, log_so2(r)[..., None]], axis=-1)
+
+
+def act_se2(m: np.ndarray, points: np.ndarray) -> np.ndarray:
+    """Move points by poses: p_a = R p_b + t. Shapes (..., 3, 3), (..., N, 2)."""
+    r, t = trans_to_rp(m)
+    return points @ np.swapaxes(r, -1, -2) + t[..., None, :]
+
+
 def hat_se2(tau: np.ndarray) -> np.ndarray:
     """3x3 matrix [[0, -theta, x], [theta, 0, y], [0, 0, 0]] of a tangent vector."""
     tau = np.asarray(tau, dtype=float)
@@ -73,6 +98,8 @@ def log_vec_se2(m: np.ndarray) -> np.ndarray:
     if m.ndim == 2:
         (c, _, tx), (s, _, ty) = m[0].tolist(), m[1].tolist()
         theta = math.atan2(s, c)
+        if theta == -math.pi:  # keep the range (-pi, pi], as log_so2 does
+            theta = math.pi
         a, b = _v_scalars(theta)
         den = a * a + b * b
         return np.array([(a * tx + b * ty) / den, (a * ty - b * tx) / den, theta])
