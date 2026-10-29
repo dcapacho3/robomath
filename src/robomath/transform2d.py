@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .geodesic import interp_se2
 from .se2 import (
     adjoint_se2,
     exp_vec_se2,
@@ -130,6 +131,10 @@ class Transform2D:
     def lminus(self, other: "Transform2D") -> np.ndarray:
         """Tangent vector in the global frame that leads from other to this pose."""
         return lminus_se2(self.matrix, other.matrix)
+
+    def interp(self, other: "Transform2D", t: np.ndarray) -> "Transform2D":
+        """Pose a fraction t of the way from this one (t = 0) to other (t = 1)."""
+        return Transform2D(interp_se2(self.matrix, other.matrix, t))
 
     def isclose(self, other: "Transform2D", atol: float = 1e-9) -> bool:
         """True if every matrix entry is within atol of the other's."""

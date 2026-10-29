@@ -101,6 +101,25 @@ def test_log_adjoint_and_plus_minus():
     assert_allclose(OTHER.lminus(T), rm.lminus_se2(OTHER.matrix, POSES), atol=0)
 
 
+def test_interp_matches_the_function_and_the_exact_short_step():
+    """Fractions 0 and 1 give the ends; half the step is half of tau."""
+    assert T.interp(OTHER, 0.0).isclose(T, atol=1e-12)
+    assert T.interp(OTHER, 1.0).isclose(OTHER, atol=1e-12)
+    assert T.interp(OTHER, 0.3).isclose(
+        Transform2D(rm.interp_se2(POSES, OTHER.matrix, 0.3)), atol=0
+    )
+    arc = Transform2D.identity().rplus([1.0, 0.0, 2.0])
+    half = Transform2D.identity().interp(arc, 0.5)
+    assert half.isclose(Transform2D.identity().rplus([0.5, 0.0, 1.0]), atol=1e-12)
+
+
+def test_interp_goes_the_short_way_across_the_seam():
+    """From 3.1 rad to -3.1 rad the middle is pi, not 0."""
+    a = Transform2D.from_xyt([0.0, 0.0, 3.1])
+    b = Transform2D.from_xyt([0.0, 0.0, -3.1])
+    assert abs(a.interp(b, 0.5).xyt[2]) == pytest.approx(np.pi)
+
+
 def test_equality_is_exact_and_not_hashable():
     """== compares matrices exactly, isclose allows a tolerance, hashing is refused."""
     a = Transform2D(POSES[0])

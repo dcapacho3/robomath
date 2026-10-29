@@ -5,6 +5,11 @@ All notable changes to robomath. The format follows
 
 ## [Unreleased]
 
+### Added
+- `Transform.interp(other, t)` and `Transform2D.interp(other, t)`: the pose a fraction `t`
+  of the way from one pose to another, along the shortest path. They call `interp_se3`
+  and `interp_se2`.
+
 ### Fixed
 - `act_sim3` failed when the pose was a nested list. It now accepts one, as `act_se2`
   and `act_se3` do.

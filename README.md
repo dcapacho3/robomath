@@ -276,6 +276,7 @@ methods:
 | `T @ points` | move points of shape `(..., 3)` |
 | `T.inverse()`, `T.log()`, `T.adjoint()` | inverse, tangent vector, 6x6 adjoint |
 | `T.rplus(tau)`, `T.lplus(tau)`, `T.rminus(other)`, `T.lminus(other)` | plus and minus |
+| `T.interp(other, t)` | the pose a fraction `t` of the way from `T` (0) to `other` (1) |
 | `T.rotation`, `T.translation`, `T.matrix`, `T.shape` | parts |
 | `T.isclose(other, atol=1e-9)` | compare with a tolerance (`==` is exact) |
 

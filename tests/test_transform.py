@@ -109,6 +109,15 @@ def test_log_adjoint_and_plus_minus():
     assert_allclose(OTHER.lminus(T), rm.lminus_se3(OTHER.matrix, POSES), rtol=0, atol=0)
 
 
+def test_interp_matches_the_function():
+    """Fractions 0 and 1 give the ends; the middle is what interp_se3 gives."""
+    assert T.interp(OTHER, 0.0).isclose(T, atol=1e-12)
+    assert T.interp(OTHER, 1.0).isclose(OTHER, atol=1e-12)
+    assert T.interp(OTHER, 0.3).isclose(
+        Transform(rm.interp_se3(POSES, OTHER.matrix, 0.3)), atol=0
+    )
+
+
 def test_equality_is_exact_and_not_hashable():
     """== compares matrices exactly, isclose allows a tolerance, hashing is refused."""
     a = Transform(POSES[0])

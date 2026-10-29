@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .convert import pq_to_trans
+from .geodesic import interp_se3
 from .se3 import (
     adjoint,
     exp_vec_se3,
@@ -127,6 +128,10 @@ class Transform:
     def lminus(self, other: "Transform") -> np.ndarray:
         """Tangent vector in the global frame that leads from other to this pose."""
         return lminus_se3(self.matrix, other.matrix)
+
+    def interp(self, other: "Transform", t: np.ndarray) -> "Transform":
+        """Pose a fraction t of the way from this one (t = 0) to other (t = 1)."""
+        return Transform(interp_se3(self.matrix, other.matrix, t))
 
     def isclose(self, other: "Transform", atol: float = 1e-9) -> bool:
         """True if every matrix entry is within atol of the other's."""
