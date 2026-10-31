@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/dependencies-NumPy-lightgrey" alt="Depends on NumPy only">
   <img src="https://img.shields.io/badge/coverage-100%25-brightgreen" alt="Coverage 100%">
   <img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="Apache 2.0 license">
-  <a href="https://github.com/dcapacho3/robomath/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-0.1.2-blue" alt="Changelog"></a>
+  <a href="https://github.com/dcapacho3/robomath/blob/main/CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-0.1.3-blue" alt="Changelog"></a>
 </p>
 
 **The maths of robot pose and motion.**

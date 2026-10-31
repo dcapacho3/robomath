@@ -5,6 +5,8 @@ All notable changes to robomath. The format follows
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-31
+
 ### Added
 - `Transform.interp(other, t)` and `Transform2D.interp(other, t)`: the pose a fraction `t`
   of the way from one pose to another, along the shortest path. They call `interp_se3`
