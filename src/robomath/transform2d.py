@@ -86,8 +86,17 @@ class Transform2D:
 
     @property
     def xyt(self) -> np.ndarray:
-        """Coordinates (x, y, angle) with the angle in (-pi, pi], shape (..., 3)."""
-        return se2_to_xyt(self.matrix)
+        """Coordinates (x, y, angle) with the angle in (-pi, pi], shape (..., 3).
+
+        Read-only: the array is worked out once and kept, as the pose cannot change.
+        Copy it to change it.
+        """
+        cached = self.__dict__.get("_xyt")
+        if cached is None:
+            cached = se2_to_xyt(self.matrix)
+            cached.flags.writeable = False
+            object.__setattr__(self, "_xyt", cached)
+        return cached
 
     @property
     def shape(self) -> tuple[int, ...]:

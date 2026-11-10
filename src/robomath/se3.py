@@ -93,6 +93,12 @@ def trans_inv(m: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: The inverse poses, shape (..., 4, 4).
     """
+    m = np.asarray(m)
+    if m.shape == (3, 3):  # one planar pose, in plain floats
+        (c, d, x), (s, e, y) = m[0].tolist(), m[1].tolist()
+        return np.array(
+            [[c, s, -(c * x + s * y)], [d, e, -(d * x + e * y)], [0.0, 0.0, 1.0]]
+        )
     r, t = trans_to_rp(m)
     rt = np.swapaxes(r, -1, -2)
     return rp_to_trans(rt, -apply(rt, t))

@@ -1,6 +1,7 @@
 """Robomath - Test SO(2) and SE(2) against SE(3) and the group laws."""
 
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from test_rotations import TOL
 
@@ -17,9 +18,11 @@ from robomath import (
     rminus_se2,
     rp_to_trans,
     rplus_se2,
+    se2_to_xyt,
     trans_inv,
     vee_se2,
     wrap_angle,
+    xyt_to_se2,
 )
 
 RNG = np.random.default_rng(0)
@@ -122,3 +125,35 @@ def test_plus_minus():
     )
     local = np.einsum("nij,nj->ni", adjoint_se2(POSES), TAUS)
     assert_allclose(lplus_se2(local, POSES), rplus_se2(POSES, TAUS), rtol=0, atol=1e-12)
+
+
+def _scaled(scale):
+    """Poses whose translation and angle are about `scale`, and a zero-angle one."""
+    rng = np.random.default_rng(7)
+    xyt = rng.normal(0.0, scale, (500, 3))
+    xyt[0, 2] = 0.0
+    return xyt
+
+
+@pytest.mark.parametrize("scale", [1e-6, 0.02, 1.0, 3.0])
+def test_batch_equals_loop_bit_for_bit(scale):
+    """A batch gives the same bits as a loop of single calls."""
+    xyt = _scaled(scale)
+    poses = xyt_to_se2(xyt)
+    taus = xyt
+    for batch, single, args in (
+        (xyt_to_se2, xyt_to_se2, xyt),
+        (se2_to_xyt, se2_to_xyt, poses),
+        (trans_inv, trans_inv, poses),
+        (log_vec_se2, log_vec_se2, poses),
+        (exp_vec_se2, exp_vec_se2, taus),
+    ):
+        looped = np.array([single(a) for a in args])
+        assert np.array_equal(batch(args), looped)
+
+
+def test_single_pose_paths_keep_the_angle_range():
+    """An angle of pi stays pi (not -pi) in the one-pose path, as in the batch path."""
+    m = xyt_to_se2(np.array([1.0, 2.0, np.pi]))
+    assert se2_to_xyt(m)[2] == np.pi
+    assert se2_to_xyt(np.stack([m, m]))[0, 2] == np.pi

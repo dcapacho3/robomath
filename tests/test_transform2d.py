@@ -130,3 +130,15 @@ def test_equality_is_exact_and_not_hashable():
     assert a.isclose(Transform2D(POSES[0] + 1e-12))
     with pytest.raises(TypeError):
         hash(a)
+
+
+def test_xyt_is_kept_and_read_only():
+    """The same array comes back, it cannot be changed, and a copy can."""
+    t = Transform2D.from_xyt(np.array([1.0, 2.0, 0.5]))
+    assert t.xyt is t.xyt
+    assert not t.xyt.flags.writeable
+    with pytest.raises(ValueError):
+        t.xyt[0] = 9.0
+    changed = t.xyt.copy()
+    changed[0] = 9.0
+    assert t.xyt[0] == 1.0

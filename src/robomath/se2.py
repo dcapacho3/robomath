@@ -23,18 +23,25 @@ def _perp(v: np.ndarray) -> np.ndarray:
 def _v_coefficients(theta: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """The V of SE(2) is a I + b J, with J the +90 degree turn.
 
-    a = sin(t)/t and b = (1 - cos(t))/t, written with sinc so t = 0 needs no case.
+    a = sin(t)/t and b = (1 - cos(t))/t = 2 sin(t/2)^2 / t, with a = 1 and b = 0 at
+    t = 0. The formulas match _v_scalars operation for operation, so a batch gives
+    the same bits as a loop over single poses.
     """
-    a = np.sinc(theta / np.pi)
-    b = theta / 2 * np.sinc(theta / (2 * np.pi)) ** 2
-    return a, b
+    zero = theta == 0.0
+    safe = np.where(zero, 1.0, theta)
+    half = np.sin(theta / 2)
+    return (
+        np.where(zero, 1.0, np.sin(theta) / safe),
+        np.where(zero, 0.0, 2 * half * half / safe),
+    )
 
 
 def _v_scalars(theta: float) -> tuple[float, float]:
     """The a and b of _v_coefficients for one angle, in plain floats."""
     if theta == 0.0:
         return 1.0, 0.0
-    return math.sin(theta) / theta, 2 * math.sin(theta / 2) ** 2 / theta
+    half = math.sin(theta / 2)  # half * half, as x ** 2 rounds differently in 1 in 1000
+    return math.sin(theta) / theta, 2 * half * half / theta
 
 
 def xyt_to_se2(xyt: np.ndarray) -> np.ndarray:
@@ -44,6 +51,10 @@ def xyt_to_se2(xyt: np.ndarray) -> np.ndarray:
     exp_vec_se2 of the same three numbers. The two agree only when the angle is 0.
     """
     xyt = np.asarray(xyt, dtype=float)
+    if xyt.ndim == 1:  # one pose: plain floats are several times faster than arrays
+        x, y, theta = xyt.tolist()
+        c, s = math.cos(theta), math.sin(theta)
+        return np.array([[c, -s, x], [s, c, y], [0.0, 0.0, 1.0]])
     return rp_to_trans(exp_so2(xyt[..., 2]), xyt[..., :2])
 
 
@@ -52,6 +63,11 @@ def se2_to_xyt(m: np.ndarray) -> np.ndarray:
 
     Shape (..., 3, 3) -> (..., 3). The inverse of xyt_to_se2, and not log_vec_se2.
     """
+    m = np.asarray(m)
+    if m.ndim == 2:  # one pose, in plain floats
+        (c, _, x), (s, _, y) = m[0].tolist(), m[1].tolist()
+        theta = math.atan2(s, c)
+        return np.array([x, y, math.pi if theta == -math.pi else theta])
     r, t = trans_to_rp(m)
     return np.concatenate([t, log_so2(r)[..., None]], axis=-1)
 
@@ -109,10 +125,8 @@ def log_vec_se2(m: np.ndarray) -> np.ndarray:
     r, t = trans_to_rp(m)
     theta = log_so2(r)
     a, b = _v_coefficients(theta)
-    # V^-1 = (a I - b J) / (a^2 + b^2), and a^2 + b^2 = sinc(t / 2 pi)^2.
-    rho = (a[..., None] * t - b[..., None] * _perp(t)) / (
-        np.sinc(theta / (2 * np.pi)) ** 2
-    )[..., None]
+    # V^-1 = (a I - b J) / (a^2 + b^2)
+    rho = (a[..., None] * t - b[..., None] * _perp(t)) / (a * a + b * b)[..., None]
     return np.concatenate([rho, theta[..., None]], axis=-1)
 
 
