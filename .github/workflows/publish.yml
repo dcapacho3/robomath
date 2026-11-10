@@ -10,7 +10,12 @@ permissions:
   contents: read
 
 jobs:
+  # Nothing is built or published unless the tests pass.
+  ci:
+    uses: ./.github/workflows/ci_pytest.yml
+
   build:
+    needs: ci
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7

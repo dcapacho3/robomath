@@ -5,6 +5,17 @@ All notable changes to robomath. The format follows
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-11-10
+
+### Fixed
+- The 0.1.5 release notes said a batch and a loop give the same bits. They do on some
+  machines and differ by a few units in the last place on others, as numpy and the C
+  library round sin, atan2 and matrix products differently. The test for it now allows a
+  few ulp, and the notes are corrected. The code is the same as 0.1.5.
+
+### Changed
+- Publishing to PyPI first runs the test workflow, and failing tests stop the upload.
+
 ## [0.1.5] - 2026-11-10
 
 ### Fixed

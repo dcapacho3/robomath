@@ -136,8 +136,12 @@ def _scaled(scale):
 
 
 @pytest.mark.parametrize("scale", [1e-6, 0.02, 1.0, 3.0])
-def test_batch_equals_loop_bit_for_bit(scale):
-    """A batch gives the same bits as a loop of single calls."""
+def test_batch_equals_loop(scale):
+    """A batch gives what a loop of single calls gives, to a few ulp.
+
+    The two routes use the same formulas, but numpy and the C library may round
+    sin, atan2 and matrix products differently on another machine.
+    """
     xyt = _scaled(scale)
     poses = xyt_to_se2(xyt)
     taus = xyt
@@ -149,7 +153,7 @@ def test_batch_equals_loop_bit_for_bit(scale):
         (exp_vec_se2, exp_vec_se2, taus),
     ):
         looped = np.array([single(a) for a in args])
-        assert np.array_equal(batch(args), looped)
+        assert_allclose(batch(args), looped, rtol=1e-14, atol=1e-14)
 
 
 def test_single_pose_paths_keep_the_angle_range():
