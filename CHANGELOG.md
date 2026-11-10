@@ -5,6 +5,11 @@ All notable changes to robomath. The format follows
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-10
+
+### Changed
+- New logo: a robot head whose smile is a rotation arrow, next to the name. The README and the PyPI page show it. The code is the same as 0.1.3.
+
 ## [0.1.3] - 2026-10-31
 
 ### Added
