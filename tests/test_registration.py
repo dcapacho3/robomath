@@ -1,6 +1,7 @@
 """Robomath - Test Kabsch and Umeyama on known motions, noise and mirrors."""
 
 import numpy as np
+from checks import assert_rotations
 from numpy.testing import assert_allclose
 from scipy.spatial.transform import Rotation
 from test_rotations import TOL
@@ -49,12 +50,7 @@ def test_kabsch_never_returns_a_mirror():
     mirrored = P * np.array([1.0, 1.0, -1.0])
     r, _ = rm.kabsch(P, mirrored)
     assert_allclose(np.linalg.det(r), 1.0, rtol=0, atol=1e-12)
-    assert_allclose(
-        r @ np.swapaxes(r, -1, -2),
-        np.broadcast_to(np.eye(3), r.shape),
-        rtol=0,
-        atol=1e-12,
-    )
+    assert_rotations(r)
 
 
 def test_umeyama_recovers_scale_rotation_translation():

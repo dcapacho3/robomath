@@ -40,5 +40,11 @@ testpaths = ["tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "D"]
 
+[tool.pylint.design]
+# The private mean and axis-angle helpers unpack a matrix into named entries.
+max-args = 6
+max-positional-arguments = 6
+max-locals = 20
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"

@@ -82,9 +82,9 @@ def test_matmul_moves_points():
 def test_matmul_rejects_what_it_cannot_use():
     """A wrong shape, and an array on the left, raise TypeError."""
     with pytest.raises(TypeError):
-        T @ np.ones(3)
+        _ = T @ np.ones(3)
     with pytest.raises(TypeError):
-        np.ones(2) @ T
+        _ = np.ones(2) @ T
 
 
 def test_log_adjoint_and_plus_minus():
@@ -135,7 +135,8 @@ def test_equality_is_exact_and_not_hashable():
 def test_xyt_is_kept_and_read_only():
     """The same array comes back, it cannot be changed, and a copy can."""
     t = Transform2D.from_xyt(np.array([1.0, 2.0, 0.5]))
-    assert t.xyt is t.xyt
+    first = t.xyt
+    assert first is t.xyt
     assert not t.xyt.flags.writeable
     with pytest.raises(ValueError):
         t.xyt[0] = 9.0

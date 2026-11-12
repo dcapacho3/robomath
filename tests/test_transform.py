@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from checks import assert_rotations
 from numpy.testing import assert_allclose
 from scipy.spatial.transform import Rotation
 from test_rotations import TOL
@@ -50,12 +51,7 @@ def test_from_matrix_repairs_a_drifted_pose():
     noisy = POSES + 1e-3 * RNG.normal(size=POSES.shape)
     fixed = Transform.from_matrix(noisy)
     r = fixed.rotation
-    assert_allclose(
-        r @ np.swapaxes(r, -1, -2),
-        np.broadcast_to(np.eye(3), r.shape),
-        rtol=0,
-        atol=1e-12,
-    )
+    assert_rotations(r)
     assert_allclose(np.linalg.det(r), 1.0, rtol=0, atol=1e-12)
     assert_allclose(fixed.matrix[:, 3], [[0, 0, 0, 1]] * 30, rtol=0, atol=0)
     expected = Rotation.from_matrix(noisy[:, :3, :3]).as_matrix()
@@ -91,9 +87,9 @@ def test_matmul_moves_points():
 def test_matmul_rejects_what_it_cannot_use():
     """A wrong shape, and an array on the left, raise TypeError, not a silent result."""
     with pytest.raises(TypeError):
-        T @ np.ones(4)
+        _ = T @ np.ones(4)
     with pytest.raises(TypeError):
-        np.ones(3) @ T
+        _ = np.ones(3) @ T
 
 
 def test_log_adjoint_and_plus_minus():

@@ -1,6 +1,7 @@
 """Robomath - Test Sim(3) against scipy's matrix exponential and the group laws."""
 
 import numpy as np
+from checks import assert_rotations
 from numpy.testing import assert_allclose
 from scipy.linalg import expm, logm
 from scipy.spatial.transform import Rotation
@@ -65,12 +66,7 @@ def test_srt_round_trip_and_composition():
     """Scale, rotation and translation come back; scales multiply under @."""
     s, r, t = rm.sim3_to_srt(POSES)
     assert_allclose(rm.srt_to_sim3(s, r, t), POSES, rtol=0, atol=1e-12)
-    assert_allclose(
-        r @ np.swapaxes(r, -1, -2),
-        np.broadcast_to(np.eye(3), r.shape),
-        rtol=0,
-        atol=1e-12,
-    )
+    assert_rotations(r)
     s2, _, _ = rm.sim3_to_srt(POSES @ OTHERS)
     assert_allclose(s2, s * rm.sim3_to_srt(OTHERS)[0], rtol=1e-12, atol=0)
 
