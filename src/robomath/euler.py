@@ -73,7 +73,9 @@ def matrix_to_euler_zyx(r: np.ndarray) -> tuple[float, float, float]:
             return 0.0, -math.pi / 2, -math.atan2(r12, r22)
         return (
             math.atan2(r21, r11),
-            math.atan2(-r31, math.hypot(r11, r21)),
+            # sqrt instead of hypot: entries are at most 1, and the two routes
+            # then share every operation (the C library's hypot differs).
+            math.atan2(-r31, math.sqrt(r11 * r11 + r21 * r21)),
             math.atan2(r32, r33),
         )
     r11, r12 = r[..., 0, 0], r[..., 0, 1]
@@ -89,7 +91,9 @@ def matrix_to_euler_zyx(r: np.ndarray) -> tuple[float, float, float]:
     beta = np.where(
         lock_up,
         np.pi / 2,
-        np.where(lock_down, -np.pi / 2, np.arctan2(-r31, np.hypot(r11, r21))),
+        np.where(
+            lock_down, -np.pi / 2, np.arctan2(-r31, np.sqrt(r11 * r11 + r21 * r21))
+        ),
     )
     alpha = np.where(lock_up | lock_down, 0.0, np.arctan2(r21, r11))
     gamma = np.where(

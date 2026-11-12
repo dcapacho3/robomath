@@ -136,7 +136,8 @@ def quat_to_axis_angle(q: np.ndarray) -> tuple[np.ndarray, float]:
             return np.array([1.0, 0.0, 0.0]), angle
         return np.array([x / sin_half, y / sin_half, z / sin_half]), angle
     q = np.where(q[..., 3:] < 0, -q, q)
-    sin_half = norm(q[..., :3])
+    x, y, z = q[..., 0], q[..., 1], q[..., 2]
+    sin_half = np.sqrt(x * x + y * y + z * z)
     cos_half = q[..., 3]
     # arctan2, not 2*arccos(cos_half): arccos is flat near cos = 1, so a tiny
     # angle would lose its digits. sin_half is exact there.
@@ -218,24 +219,17 @@ def _slerp_single(q0: np.ndarray, q1: np.ndarray, t: float) -> np.ndarray:
         x1, y1, z1, w1, dot = -x1, -y1, -z1, -w1, -dot
     if dot > SLERP_TOL:
         a, b = 1 - t, t
-        scale = 1 / math.sqrt(
-            sum(
-                (a * u + b * v) ** 2
-                for u, v in zip((x0, y0, z0, w0), (x1, y1, z1, w1), strict=True)
-            )
-        )
-    else:
-        theta = math.acos(min(dot, 1.0))
-        sin_theta = math.sin(theta)
-        a, b = math.sin((1 - t) * theta) / sin_theta, math.sin(t * theta) / sin_theta
-        scale = 1.0
-    return np.array(
-        [
-            scale * (a * x0 + b * x1),
-            scale * (a * y0 + b * y1),
-            scale * (a * z0 + b * z1),
-            scale * (a * w0 + b * w1),
+        parts = [
+            a * u + b * v
+            for u, v in zip((x0, y0, z0, w0), (x1, y1, z1, w1), strict=True)
         ]
+        scale = 1 / math.sqrt(sum(p * p for p in parts))
+        return np.array([scale * p for p in parts])
+    theta = math.acos(min(dot, 1.0))
+    sin_theta = math.sin(theta)
+    a, b = math.sin((1 - t) * theta) / sin_theta, math.sin(t * theta) / sin_theta
+    return np.array(
+        [a * x0 + b * x1, a * y0 + b * y1, a * z0 + b * z1, a * w0 + b * w1]
     )
 
 
@@ -270,11 +264,14 @@ def slerp(q0: np.ndarray, q1: np.ndarray, t: float) -> np.ndarray:
     near = dot > SLERP_TOL
     theta = np.arccos(np.minimum(dot, 1.0))
     sin_theta = np.where(near, 1.0, np.sin(theta))
-    result = (np.sin((1 - t) * theta) * q0 + np.sin(t * theta) * q1) / sin_theta
+    a = np.sin((1 - t) * theta) / sin_theta
+    b = np.sin(t * theta) / sin_theta
+    result = a * q0 + b * q1
     if near.any():
         lerp = (1 - t) * q0 + t * q1
-        lerp = lerp / norm(lerp)[..., None]
-        result = np.where(near, lerp, result)
+        x, y, z, w = lerp[..., 0], lerp[..., 1], lerp[..., 2], lerp[..., 3]
+        scale = 1 / np.sqrt(x * x + y * y + z * z + w * w)
+        result = np.where(near, scale[..., None] * lerp, result)
     return result
 
 

@@ -1,0 +1,21 @@
+name: Route report
+
+# Prints, on each platform, whether the scalar and batch routes give the same
+# bits, and which primitive differs where they do not. A report, never a gate.
+on:
+  workflow_dispatch:
+
+jobs:
+  report:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+    - run: pip install -e .
+    - run: python tools/route_report.py

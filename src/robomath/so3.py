@@ -9,7 +9,6 @@ import math
 
 import numpy as np
 
-from ._util import norm
 from .rotations import inverse
 
 SIN_TOL = 1e-5
@@ -40,6 +39,33 @@ def _rodrigues(x: float, y: float, z: float, k1: float, k2: float) -> np.ndarray
             [k2 * xz - k1 * y, k2 * yz + k1 * x, 1 - k2 * (x * x + y * y)],
         ]
     )
+
+
+def _rodrigues_batch(v: np.ndarray, k1: np.ndarray, k2: np.ndarray) -> np.ndarray:
+    """_rodrigues for batches: the same expressions, entry by entry.
+
+    Writing the entries out keeps the batch route operation for operation equal
+    to the single-vector route, which `hat` plus a matrix product is not.
+    """
+    x, y, z = v[..., 0], v[..., 1], v[..., 2]
+    xy, xz, yz = x * y, x * z, y * z
+    out = np.empty(v.shape[:-1] + (3, 3))
+    out[..., 0, 0] = 1 - k2 * (y * y + z * z)
+    out[..., 0, 1] = k2 * xy - k1 * z
+    out[..., 0, 2] = k2 * xz + k1 * y
+    out[..., 1, 0] = k2 * xy + k1 * z
+    out[..., 1, 1] = 1 - k2 * (x * x + z * z)
+    out[..., 1, 2] = k2 * yz - k1 * x
+    out[..., 2, 0] = k2 * xz - k1 * y
+    out[..., 2, 1] = k2 * yz + k1 * x
+    out[..., 2, 2] = 1 - k2 * (x * x + y * y)
+    return out
+
+
+def _length(v: np.ndarray) -> np.ndarray:
+    """sqrt(x^2 + y^2 + z^2) with the same operations as the scalar routes."""
+    x, y, z = v[..., 0], v[..., 1], v[..., 2]
+    return np.sqrt(x * x + y * y + z * z)
 
 
 def hat(v: np.ndarray) -> np.ndarray:
@@ -190,7 +216,7 @@ def matrix_to_axis_angle(r: np.ndarray) -> tuple[np.ndarray, float]:
     axis_times_2sin[..., 0] = r[..., 2, 1] - r[..., 1, 2]
     axis_times_2sin[..., 1] = r[..., 0, 2] - r[..., 2, 0]
     axis_times_2sin[..., 2] = r[..., 1, 0] - r[..., 0, 1]
-    sin_angle = norm(axis_times_2sin) / 2
+    sin_angle = _length(axis_times_2sin) / 2
 
     # The angle is the same in every case, and 0 at R = I and pi at a half turn.
     angle = np.arctan2(sin_angle, cos_angle)
@@ -226,13 +252,17 @@ def exp_vec(v: np.ndarray) -> np.ndarray:
         x, y, z = v.tolist()
         t = math.sqrt(x * x + y * y + z * z)
         if t > 0:
-            return _rodrigues(x, y, z, math.sin(t) / t, 2 * (math.sin(t / 2) / t) ** 2)
+            ratio = math.sin(t / 2) / t
+            return _rodrigues(x, y, z, math.sin(t) / t, 2 * ratio * ratio)
         return _rodrigues(x, y, z, 1.0, 0.5)
-    t = norm(v)
-    w = hat(v)
+    t = _length(v)
+    positive = t > 0
+    safe = np.where(positive, t, 1.0)
+    ratio = np.sin(safe / 2) / safe
     # Rodrigues with the axis folded into v: I + sin(t)/t [v]x + (1-cos t)/t^2 [v]x^2.
-    s, a = _sin_and_cos_ratios(t)
-    return np.eye(3) + s[..., None, None] * w + a[..., None, None] * (w @ w)
+    k1 = np.where(positive, np.sin(safe) / safe, 1.0)
+    k2 = np.where(positive, 2 * ratio * ratio, 0.5)
+    return _rodrigues_batch(v, k1, k2)
 
 
 def log_vec(r: np.ndarray) -> np.ndarray:
@@ -324,42 +354,37 @@ def lminus(r2: np.ndarray, r1: np.ndarray) -> np.ndarray:
     return log_vec(r2 @ inverse(r1))
 
 
-def _sin_and_cos_ratios(t: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """sin(t) / t and (1 - cos t) / t^2, exact for every t >= 0.
+def _jr_coefficients(t: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Coefficients (a, b) of jr: (1 - cos t) / t^2 and (t - sin t) / t^3.
 
-    1 - cos t = 2 sin^2(t/2) has no cancellation, so no series is needed. Only
-    t = 0 uses its limits, 1 and 1/2.
+    1 - cos t = 2 sin^2(t/2) has no cancellation; only t = 0 uses its limit.
     """
     positive = t > 0
-    safe = np.where(positive, t, 1.0)  # keeps the unused branch from dividing by 0
-    s = np.where(positive, np.sin(safe) / safe, 1.0)
-    a = np.where(positive, 2 * (np.sin(safe / 2) / safe) ** 2, 0.5)
-    return s, a
-
-
-def _jr_coefficients(t: float) -> tuple[float, float]:
-    """Coefficients (a, b) of jr: (1 - cos t) / t^2 and (t - sin t) / t^3."""
-    t = np.asarray(t, dtype=float)
+    guarded = np.where(positive, t, 1.0)  # keeps the unused branch from 0 division
+    ratio = np.sin(guarded / 2) / guarded
+    a = np.where(positive, 2 * ratio * ratio, 0.5)
     small = t < SMALL_THETA
-    safe = np.where(small, 1.0, t)  # keeps the unused branch from dividing by 0
-    a = _sin_and_cos_ratios(t)[1]
-    b = np.where(small, 1 / 6 - t**2 / 120, (safe - np.sin(safe)) / safe**3)
+    safe = np.where(small, 1.0, t)
+    b = np.where(
+        small,
+        1 / 6 - t * t / 120,
+        (safe - np.sin(safe)) / (safe * safe * safe),
+    )
     return a, b
 
 
-def _jr_inv_coefficient(t: float) -> float:
+def _jr_inv_coefficient(t: np.ndarray) -> np.ndarray:
     """Coefficient c of jr_inv: 1 / t^2 - (1 + cos t) / (2 t sin t).
 
     Written with (1 + cos t) / sin t = 1 / tan(t/2), which has no cancellation
     near t = pi.
     """
-    t = np.asarray(t, dtype=float)
     small = t < SMALL_THETA
     safe = np.where(small, 1.0, t)
     return np.where(
         small,
-        1 / 12 + t**2 / 720,
-        1 / safe**2 - 1 / (2 * safe * np.tan(safe / 2)),
+        1 / 12 + t * t / 720,
+        1 / (safe * safe) - 1 / (2 * safe * np.tan(safe / 2)),
     )
 
 
@@ -379,12 +404,18 @@ def jr(theta: np.ndarray) -> np.ndarray:
     if theta.ndim == 1:
         x, y, z = theta.tolist()
         t = math.sqrt(x * x + y * y + z * z)
-        a = 2 * (math.sin(t / 2) / t) ** 2 if t > 0 else 0.5
-        b = (t - math.sin(t)) / t**3 if t >= SMALL_THETA else 1 / 6 - t**2 / 120
+        if t > 0:
+            ratio = math.sin(t / 2) / t
+            a = 2 * ratio * ratio
+        else:
+            a = 0.5
+        if t >= SMALL_THETA:
+            b = (t - math.sin(t)) / (t * t * t)
+        else:
+            b = 1 / 6 - t * t / 120
         return _rodrigues(x, y, z, -a, b)
-    a, b = _jr_coefficients(norm(theta))
-    w = hat(theta)
-    return np.eye(3) - a[..., None, None] * w + b[..., None, None] * (w @ w)
+    a, b = _jr_coefficients(_length(theta))
+    return _rodrigues_batch(theta, -a, b)
 
 
 def jr_inv(theta: np.ndarray) -> np.ndarray:
@@ -401,13 +432,12 @@ def jr_inv(theta: np.ndarray) -> np.ndarray:
         x, y, z = theta.tolist()
         t = math.sqrt(x * x + y * y + z * z)
         if t >= SMALL_THETA:
-            c = 1 / t**2 - 1 / (2 * t * math.tan(t / 2))
+            c = 1 / (t * t) - 1 / (2 * t * math.tan(t / 2))
         else:
-            c = 1 / 12 + t**2 / 720
+            c = 1 / 12 + t * t / 720
         return _rodrigues(x, y, z, 0.5, c)
-    c = _jr_inv_coefficient(norm(theta))
-    w = hat(theta)
-    return np.eye(3) + w / 2 + c[..., None, None] * (w @ w)
+    c = _jr_inv_coefficient(_length(theta))
+    return _rodrigues_batch(theta, 0.5, c)
 
 
 def jl(theta: np.ndarray) -> np.ndarray:

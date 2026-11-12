@@ -5,6 +5,27 @@ All notable changes to robomath. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The batch routes of SE(2) and SE(3) (`xyt_to_se2`, `se2_to_xyt`,
+  `exp_vec_se2`, `log_vec_se2`, `act_se2`, `adjoint_se2`, `trans_inv`,
+  `exp_vec_se3`, `log_vec_se3`, `act_se3`, `adjoint`) write their result into
+  one array instead of going through the block helpers. SE(2) results are byte
+  for byte those of 0.1.6, checked on five thousand random poses and the edge
+  angles; `rminus_se2` on a batch of one is about a quarter faster.
+- The scalar and the batch route now share every operation in `exp_vec`, `jr`,
+  `jr_inv`, `log_vec`, `quat_to_axis_angle`, `slerp` and
+  `matrix_to_euler_zyx`, as 0.1.5 did for SE(2): the batch Rodrigues is written
+  entry by entry instead of hat plus a matrix product (2.2 times faster at a
+  thousand vectors), squares are products, and `hypot` became the sqrt both
+  routes can share. On one machine the two routes now give the same bits for
+  every function `tools/route_report.py` covers. SO(3), SE(3), quaternion and
+  Euler results can differ from 0.1.6 in the last bits; SE(2) does not.
+
+### Added
+- `tools/route_report.py` prints whether the scalar and batch routes give the
+  same bits on the machine it runs on, and which primitive differs where they
+  do not. The route-report workflow runs it on Linux, macOS and Windows.
+
 ## [0.1.6] - 2026-11-10
 
 ### Fixed
