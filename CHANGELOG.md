@@ -5,6 +5,8 @@ All notable changes to robomath. The format follows
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-11-12
+
 ### Changed
 - The batch routes of SE(2) and SE(3) (`xyt_to_se2`, `se2_to_xyt`,
   `exp_vec_se2`, `log_vec_se2`, `act_se2`, `adjoint_se2`, `trans_inv`,
