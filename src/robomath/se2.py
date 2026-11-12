@@ -11,13 +11,8 @@ import math
 
 import numpy as np
 
-from .se3 import rp_to_trans, trans_inv, trans_to_rp
-from .so2 import exp_so2, log_so2
-
-
-def _perp(v: np.ndarray) -> np.ndarray:
-    """Rotate vectors by +90 degrees: (x, y) -> (-y, x). Shape (..., 2)."""
-    return np.stack([-v[..., 1], v[..., 0]], axis=-1)
+from .se3 import trans_inv
+from .so2 import log_so2
 
 
 def _v_coefficients(theta: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -55,7 +50,16 @@ def xyt_to_se2(xyt: np.ndarray) -> np.ndarray:
         x, y, theta = xyt.tolist()
         c, s = math.cos(theta), math.sin(theta)
         return np.array([[c, -s, x], [s, c, y], [0.0, 0.0, 1.0]])
-    return rp_to_trans(exp_so2(xyt[..., 2]), xyt[..., :2])
+    theta = xyt[..., 2]
+    c, s = np.cos(theta), np.sin(theta)
+    out = np.zeros(xyt.shape[:-1] + (3, 3))
+    out[..., 0, 0] = c
+    out[..., 0, 1] = -s
+    out[..., 1, 0] = s
+    out[..., 1, 1] = c
+    out[..., :2, 2] = xyt[..., :2]
+    out[..., 2, 2] = 1.0
+    return out
 
 
 def se2_to_xyt(m: np.ndarray) -> np.ndarray:
@@ -68,8 +72,10 @@ def se2_to_xyt(m: np.ndarray) -> np.ndarray:
         (c, _, x), (s, _, y) = m[0].tolist(), m[1].tolist()
         theta = math.atan2(s, c)
         return np.array([x, y, math.pi if theta == -math.pi else theta])
-    r, t = trans_to_rp(m)
-    return np.concatenate([t, log_so2(r)[..., None]], axis=-1)
+    out = np.empty(m.shape[:-2] + (3,))
+    out[..., :2] = m[..., :2, 2]
+    out[..., 2] = log_so2(m[..., :2, :2])
+    return out
 
 
 def act_se2(m: np.ndarray, points: np.ndarray) -> np.ndarray:
@@ -77,8 +83,8 @@ def act_se2(m: np.ndarray, points: np.ndarray) -> np.ndarray:
 
     The points need an N axis: one point has shape (1, 2).
     """
-    r, t = trans_to_rp(m)
-    return points @ np.swapaxes(r, -1, -2) + t[..., None, :]
+    m = np.asarray(m, dtype=float)
+    return points @ np.swapaxes(m[..., :2, :2], -1, -2) + m[..., None, :2, 2]
 
 
 def hat_se2(tau: np.ndarray) -> np.ndarray:
@@ -105,10 +111,18 @@ def exp_vec_se2(tau: np.ndarray) -> np.ndarray:
         a, b = _v_scalars(theta)
         c, s = math.cos(theta), math.sin(theta)
         return np.array([[c, -s, a * x - b * y], [s, c, b * x + a * y], [0, 0, 1.0]])
-    rho, theta = tau[..., :2], tau[..., 2]
+    x, y, theta = tau[..., 0], tau[..., 1], tau[..., 2]
     a, b = _v_coefficients(theta)
-    t = a[..., None] * rho + b[..., None] * _perp(rho)
-    return rp_to_trans(exp_so2(theta), t)
+    c, s = np.cos(theta), np.sin(theta)
+    out = np.zeros(tau.shape[:-1] + (3, 3))
+    out[..., 0, 0] = c
+    out[..., 0, 1] = -s
+    out[..., 1, 0] = s
+    out[..., 1, 1] = c
+    out[..., 0, 2] = a * x - b * y
+    out[..., 1, 2] = b * x + a * y
+    out[..., 2, 2] = 1.0
+    return out
 
 
 def log_vec_se2(m: np.ndarray) -> np.ndarray:
@@ -122,21 +136,25 @@ def log_vec_se2(m: np.ndarray) -> np.ndarray:
         a, b = _v_scalars(theta)
         den = a * a + b * b
         return np.array([(a * tx + b * ty) / den, (a * ty - b * tx) / den, theta])
-    r, t = trans_to_rp(m)
-    theta = log_so2(r)
+    theta = log_so2(m[..., :2, :2])
     a, b = _v_coefficients(theta)
+    den = a * a + b * b
+    tx, ty = m[..., 0, 2], m[..., 1, 2]
+    out = np.empty(m.shape[:-2] + (3,))
     # V^-1 = (a I - b J) / (a^2 + b^2)
-    rho = (a[..., None] * t - b[..., None] * _perp(t)) / (a * a + b * b)[..., None]
-    return np.concatenate([rho, theta[..., None]], axis=-1)
+    out[..., 0] = (a * tx + b * ty) / den
+    out[..., 1] = (a * ty - b * tx) / den
+    out[..., 2] = theta
+    return out
 
 
 def adjoint_se2(m: np.ndarray) -> np.ndarray:
     """3x3 adjoint [[R, (t_y, -t_x)], [0, 1]] of a pose, for (x, y, theta)."""
-    r, t = trans_to_rp(m)
-    out = np.zeros(r.shape[:-2] + (3, 3))
-    out[..., :2, :2] = r
-    out[..., 0, 2] = t[..., 1]
-    out[..., 1, 2] = -t[..., 0]
+    m = np.asarray(m, dtype=float)
+    out = np.zeros(m.shape[:-2] + (3, 3))
+    out[..., :2, :2] = m[..., :2, :2]
+    out[..., 0, 2] = m[..., 1, 2]
+    out[..., 1, 2] = -m[..., 0, 2]
     out[..., 2, 2] = 1.0
     return out
 

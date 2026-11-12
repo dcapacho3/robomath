@@ -18,7 +18,12 @@ def exp_so2(theta: np.ndarray) -> np.ndarray:
     """
     theta = np.asarray(theta, dtype=float)
     c, s = np.cos(theta), np.sin(theta)
-    return np.stack([np.stack([c, -s], axis=-1), np.stack([s, c], axis=-1)], axis=-2)
+    out = np.empty(theta.shape + (2, 2))
+    out[..., 0, 0] = c
+    out[..., 0, 1] = -s
+    out[..., 1, 0] = s
+    out[..., 1, 1] = c
+    return out
 
 
 def _angle(s: np.ndarray, c: np.ndarray) -> np.ndarray:

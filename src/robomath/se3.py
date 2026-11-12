@@ -99,9 +99,13 @@ def trans_inv(m: np.ndarray) -> np.ndarray:
         return np.array(
             [[c, s, -(c * x + s * y)], [d, e, -(d * x + e * y)], [0.0, 0.0, 1.0]]
         )
-    r, t = trans_to_rp(m)
-    rt = np.swapaxes(r, -1, -2)
-    return rp_to_trans(rt, -apply(rt, t))
+    n = m.shape[-1] - 1
+    rt = np.swapaxes(m[..., :n, :n], -1, -2)
+    out = np.zeros(m.shape)
+    out[..., :n, :n] = rt
+    out[..., :n, n] = -apply(rt, m[..., :n, n])
+    out[..., n, n] = 1.0
+    return out
 
 
 def act_se3(m: np.ndarray, points: np.ndarray) -> np.ndarray:
@@ -109,8 +113,8 @@ def act_se3(m: np.ndarray, points: np.ndarray) -> np.ndarray:
 
     The points need an N axis: one point has shape (1, 3).
     """
-    r, t = trans_to_rp(m)
-    return points @ np.swapaxes(r, -1, -2) + t[..., None, :]
+    m = np.asarray(m, dtype=float)
+    return points @ np.swapaxes(m[..., :3, :3], -1, -2) + m[..., None, :3, 3]
 
 
 def hat_se3(tau: np.ndarray) -> np.ndarray:
@@ -153,8 +157,12 @@ def exp_vec_se3(tau: np.ndarray) -> np.ndarray:
     """
     tau = np.asarray(tau, dtype=float)
     theta = angular(tau)
+    out = np.zeros(tau.shape[:-1] + (4, 4))
+    out[..., :3, :3] = exp_vec(theta)
     # V(theta) of eq. 174 is the left Jacobian of SO(3).
-    return rp_to_trans(exp_vec(theta), apply(jl(theta), linear(tau)))
+    out[..., :3, 3] = apply(jl(theta), linear(tau))
+    out[..., 3, 3] = 1.0
+    return out
 
 
 def log_vec_se3(m: np.ndarray) -> np.ndarray:
@@ -166,9 +174,12 @@ def log_vec_se3(m: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Tangent vectors, shape (..., 6), with |theta| <= pi.
     """
-    r, t = trans_to_rp(m)
-    theta = log_vec(r)
-    return twist(apply(jl_inv(theta), t), theta)
+    m = np.asarray(m, dtype=float)
+    theta = log_vec(m[..., :3, :3])
+    out = np.empty(m.shape[:-2] + (6,))
+    out[..., LINEAR] = apply(jl_inv(theta), m[..., :3, 3])
+    out[..., ANGULAR] = theta
+    return out
 
 
 def adjoint(m: np.ndarray) -> np.ndarray:
@@ -183,10 +194,11 @@ def adjoint(m: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: The matrices [[R, [t]x R], [0, R]], shape (..., 6, 6).
     """
-    r, t = trans_to_rp(m)
-    out = np.zeros(r.shape[:-2] + (6, 6))
+    m = np.asarray(m, dtype=float)
+    r = m[..., :3, :3]
+    out = np.zeros(m.shape[:-2] + (6, 6))
     out[..., LINEAR, LINEAR] = r
-    out[..., LINEAR, ANGULAR] = hat(t) @ r
+    out[..., LINEAR, ANGULAR] = hat(m[..., :3, 3]) @ r
     out[..., ANGULAR, ANGULAR] = r
     return out
 
